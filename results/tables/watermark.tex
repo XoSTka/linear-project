@@ -1,0 +1,16 @@
+\begin{table}[htbp]
+\caption{Watermarking (Liu--Tan): quality, NCC, and ability to separate marked from never-marked images (AUC), 150 images.}
+\label{tab:watermark}
+\begin{tabular}{rrrrrrrrrrr}
+\toprule
+alpha & PSNR (dB) & share >=40 dB (\%) & NCC marked & NCC never-marked & NCC marked, noise s=4 & NCC marked, JPEG 75 & AUC NCC noise 4 & AUC shift noise 4 & AUC NCC JPEG 75 & AUC shift JPEG 75 \\
+\midrule
+2 & 77.5 & 100 & 0.997 & 0.995 & 0.78 & 0.936 & 0.49 & 0.514 & 0.516 & 0.529 \\
+4 & 59.4 & 100 & 0.999 & 0.991 & 0.926 & 0.978 & 0.424 & 0.68 & 0.622 & 0.8 \\
+8 & 49.2 & 100 & 1 & 0.98 & 0.981 & 0.992 & 0.307 & 0.947 & 0.903 & 0.982 \\
+12 & 43.9 & 94 & 1 & 0.969 & 0.993 & 0.996 & 0.96 & 0.998 & 0.998 & 1 \\
+16 & 40.2 & 56.7 & 1 & 0.959 & 0.997 & 0.998 & 1 & 1 & 1 & 1 \\
+24 & 34.8 & 0.667 & 1 & 0.938 & 0.999 & 0.999 & 1 & 1 & 1 & 1 \\
+\bottomrule
+\end{tabular}
+\end{table}
