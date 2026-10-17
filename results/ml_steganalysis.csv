@@ -1,0 +1,8 @@
+condition,test_auc,test_accuracy,auc_blockiness8_alone,auc_phaseR_alone,top_features
+"stego, no key, full capacity",1.0000,1.0000,0.9074,1.0000,"phaseR (+2.88), block4 (+0.57), block8 (+0.55)"
+"stego, secret key, full capacity",0.9861,0.9513,0.9083,0.3494,"block4 (+1.87), block8 (+1.74), block8_vs_7 (+1.52)"
+"stego, secret key, full, delta 24 (3b)",0.9571,0.8900,0.8415,0.3914,"block4 (+1.63), block8 (+1.56), block8_vs_7 (+1.21)"
+"stego, secret key, full, delta 16 (2b)",0.8621,0.7588,0.7382,0.4457,"block8 (+1.14), block4 (+1.00), d1 (-0.96)"
+"stego, secret key, short message (16 %)",0.7851,0.6950,0.6864,0.4627,"block8 (+0.90), d1 (-0.73), block4 (+0.71)"
+watermark alpha 8,0.6888,0.6288,0.5454,0.5056,"d0 (-0.77), d2 (+0.70), phaseR (+0.52)"
+watermark alpha 16,0.8489,0.7738,0.5909,0.4865,"d0 (-1.48), phaseR (+0.96), d2 (+0.95)"

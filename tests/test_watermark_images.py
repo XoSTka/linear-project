@@ -4,7 +4,7 @@ import numpy as np
 import pytest
 
 from svdmark import metrics, watermark
-from svdmark.data import list_images, load_gray, sample_images
+from svdmark.data import eval_set, list_images, load_gray
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -38,11 +38,11 @@ def test_frobenius_identity_on_rectangular_image():
 
 @pytest.mark.skipif(not list(ROOT.glob("data/images/*/*.jpg")), reason="dataset not downloaded")
 def test_real_image_uint8_round_trip():
-    A = load_gray(sample_images(list_images(ROOT / "data" / "images"))["path"].iloc[0])
+    A = load_gray(eval_set(list_images(ROOT / "data" / "images"))["path"].iloc[0])
     k = min(A.shape)
     W = np.random.default_rng(7).integers(0, 2, (k, k)).astype(float)
     Aw, key = watermark.embed(A, W, alpha=8)
-    Au = np.clip(np.rint(Aw), 0, 255)                 # saved as an 8-bit image
+    Au = np.clip(np.rint(Aw), 0, 255)  # saved as an 8-bit image
     W_star = watermark.extract(Au, key)
     assert metrics.psnr(A, Au) > 40
     assert metrics.ncc(W, W_star) > 0.99
@@ -54,7 +54,7 @@ def test_shift_score_separates_marked_from_unmarked():
     W = np.random.default_rng(3).integers(0, 2, (64, 64)).astype(float)
     Aw, key = watermark.embed(A, W, alpha=16)
     assert watermark.shift_score(Aw, key) == pytest.approx(1.0, abs=1e-9)
-    assert watermark.shift_score(A, key) == 0.0                 # untouched original: nothing moved
+    assert watermark.shift_score(A, key) == 0.0  # untouched original: nothing moved
     # while plain NCC on the unmarked original is far above chance (the false positive we report;
     # on the 320x480 photos it is 0.96-0.98, see results/pilot_decisions.md)
     assert metrics.ncc(W, watermark.extract(A, key)) > 0.5

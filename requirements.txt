@@ -1,5 +1,10 @@
-numpy
-pillow
-matplotlib
-pandas
-pytest
+# Run from the project folder:  pip install -r requirements.txt
+# tested with Python 3.10 and 3.13
+-e .[dev]          # the svdmark package itself (src/svdmark, see pyproject.toml) + matplotlib, jinja2, pytest
+# what that installs:
+#   numpy>=1.24, pandas>=2.0
+#   pillow>=10.1     10.1+ for ImageFont.load_default(size=...) in the demo logo
+#   matplotlib>=3.7  figures
+#   jinja2>=3.1      pandas DataFrame.to_latex (tables for the report)
+#   pytest>=7.0
+# optional, for the notebooks:  jupyter

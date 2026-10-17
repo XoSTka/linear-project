@@ -39,4 +39,11 @@ def test_crop_removes_requested_area():
     a = np.full((320, 480), 200.0)
     out = attacks.crop_out(a, 0.25)
     assert (out == 0).mean() == pytest.approx(0.25, abs=0.01)
-    assert out[0, 0] == 200 and out[160, 240] == 0      # border kept, centre removed
+    assert out[0, 0] == 200 and out[160, 240] == 0  # border kept, centre removed
+
+
+def test_label_matches_result_table_names():
+    assert attacks.label("none") == "none"
+    assert attacks.label("jpeg", 75) == "jpeg75"
+    assert attacks.label("crop", 0.10) == "crop0.1"
+    assert [attacks.label(n, lv) for n, lv in attacks.all_attacks()][:3] == ["none", "noise1", "noise2"]

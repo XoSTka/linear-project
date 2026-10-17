@@ -1,28 +1,31 @@
-"""Pick the 150-image experiment set and save its full-image singular values.
+"""Fix the two image sets and save the full-image singular values of the evaluation set.
+
+    pilot set : the 100 BSDS500 `val` images          -> only for choosing parameters (pilot_*.py)
+    eval set  : the 400 BSDS500 `train` + `test` images -> every reported number (full_*.py, ...)
 
 Run from the project root:  python experiments/prepare_data.py
-Writes  results/sample150.csv        (split, filename)
-        results/sigma_150.csv        (one row per image, columns s1..s320)
+Writes  results/image_sets.csv     (role, split, filename)  -- 500 rows
+        results/sigma_eval.csv     (one row per evaluation image, columns s1..s320)
 """
-import sys
+
 from pathlib import Path
 
 import numpy as np
 import pandas as pd
 
+from svdmark.data import eval_set, list_images, load_gray, pilot_set
+
 ROOT = Path(__file__).resolve().parents[1]
-sys.path.insert(0, str(ROOT / "src"))
-from svdmark.data import list_images, load_gray, sample_images  # noqa: E402
 
-df = sample_images(list_images(ROOT / "data" / "images"))
-df[["split", "filename"]].to_csv(ROOT / "results" / "sample150.csv", index=False)
+df = list_images(ROOT / "data" / "images")
+pil, ev = pilot_set(df), eval_set(df)
+sets = pd.concat([pil.assign(role="pilot"), ev.assign(role="eval")])[["role", "split", "filename"]]
+sets.to_csv(ROOT / "results" / "image_sets.csv", index=False)
 
-rows = []
-for p in df["path"]:
-    rows.append(np.linalg.svd(load_gray(p), compute_uv=False))
-sig = pd.DataFrame(rows, columns=[f"s{i+1}" for i in range(len(rows[0]))])
-sig.insert(0, "filename", df["filename"])
-sig.to_csv(ROOT / "results" / "sigma_150.csv", index=False, float_format="%.6g")
+rows = [np.linalg.svd(load_gray(p), compute_uv=False) for p in ev["path"]]
+sig = pd.DataFrame(rows, columns=[f"s{i + 1}" for i in range(len(rows[0]))])
+sig.insert(0, "filename", ev["filename"])
+sig.to_csv(ROOT / "results" / "sigma_eval.csv", index=False, float_format="%.6g")
 
-print(df["split"].value_counts().to_string())
-print("matrix shape:", sig.shape[0], "images x", sig.shape[1] - 1, "singular values")
+print(sets.groupby(["role", "split"]).size().to_string())
+print("sigma matrix:", sig.shape[0], "images x", sig.shape[1] - 1, "singular values")

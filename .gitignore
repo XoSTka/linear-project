@@ -1,7 +1,11 @@
 __pycache__/
 *.pyc
 .pytest_cache/
+.ipynb_checkpoints/
 data/
-results/*.csv
-results/*.png
+logs/
 .DS_Store
+.ruff_cache/
+.coverage
+*.egg-info/
+build/

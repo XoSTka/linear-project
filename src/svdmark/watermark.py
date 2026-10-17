@@ -3,6 +3,7 @@
 The key needed to extract is (U, Vt, S, Uw, Vwt); extraction uses the *attacked*
 image's singular values:  D* = Uw diag(S*) Vw^T,  W* = (D* - S) / alpha.
 """
+
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -16,11 +17,11 @@ from .svd_utils import reconstruct, svd
 class WatermarkKey:
     U: np.ndarray
     Vt: np.ndarray
-    S: np.ndarray          # singular values of the original image, as a vector
+    S: np.ndarray  # singular values of the original image, as a vector
     Uw: np.ndarray
     Vwt: np.ndarray
     alpha: float
-    Sw: np.ndarray         # singular values of D = S + alpha W (= those of the marked image)
+    Sw: np.ndarray  # singular values of D = S + alpha W (= those of the marked image)
 
 
 def embed(A: np.ndarray, W: np.ndarray, alpha: float) -> tuple[np.ndarray, WatermarkKey]:
@@ -64,7 +65,7 @@ def shift_score(A_received: np.ndarray, key: WatermarkKey) -> float:
 
 def shift_from_sigma(s_star: np.ndarray, key: WatermarkKey) -> float:
     v, t = s_star - key.S, key.Sw - key.S
-    if np.linalg.norm(v) < 1e-9 * np.linalg.norm(key.S):      # nothing moved (numerical noise only)
+    if np.linalg.norm(v) < 1e-9 * np.linalg.norm(key.S):  # nothing moved (numerical noise only)
         return 0.0
     denom = np.linalg.norm(v) * np.linalg.norm(t)
     return float(v @ t / denom) if denom else 0.0

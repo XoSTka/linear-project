@@ -1,0 +1,53 @@
+[build-system]
+requires = ["setuptools>=64"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "svdmark"
+version = "1.0.0"
+description = "SVD-based digital watermarking (Liu-Tan) and QIM steganography on block singular values"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "numpy>=1.24",
+    "pandas>=2.0",
+    "pillow>=10.1",
+]
+
+[project.optional-dependencies]
+# everything needed to rerun the experiments, build the figures and run the tests
+dev = [
+    "matplotlib>=3.7",
+    "jinja2>=3.1",
+    "pytest>=7.0",
+]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+# src: tests also run before `pip install -e .`;  demo: tests/test_demo.py imports demo/core.py and demo/app.py
+pythonpath = ["src", "demo"]
+
+[tool.ruff]
+line-length = 120
+target-version = "py310"
+extend-exclude = ["notebooks"]   # early exploration, kept as it was run
+
+[tool.ruff.format]
+exclude = ["*.md"]   # keep the hand-aligned comments in README examples
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "B", "UP", "SIM", "I"]
+ignore = [
+    "SIM108",  # if/else blocks are sometimes clearer than a one-line ternary
+    "SIM300",  # `x == pytest.approx(y)` reads better than the reversed order ruff suggests
+]
+
+[tool.ruff.lint.per-file-ignores]
+# the experiment scripts limit numpy to one thread per process (they run in a Pool) BEFORE numpy is imported
+"experiments/*.py" = ["E402"]
+
+[tool.ruff.lint.isort]
+known-first-party = ["svdmark", "core", "app"]

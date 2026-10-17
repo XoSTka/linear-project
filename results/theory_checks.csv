@@ -1,0 +1,56 @@
+check,b,alpha,value,note,noise_std,delta_over_b,delta
+frobenius_identity,0,4,6.88505e-14,max relative difference over 400 images,,,
+frobenius_identity,0,16,1.20055e-14,max relative difference over 400 images,,,
+weyl_max_ratio,8,,0.997417,max over blocks of max_i|dsigma_i| / ||E||_2 (must be <= 1),1,,
+sigma1_drift_rms,8,,0.997441,rms drift of sigma_1,1,,
+weyl_max_ratio,8,,0.995836,max over blocks of max_i|dsigma_i| / ||E||_2 (must be <= 1),2,,
+sigma1_drift_rms,8,,2.00079,rms drift of sigma_1,2,,
+weyl_max_ratio,8,,0.993827,max over blocks of max_i|dsigma_i| / ||E||_2 (must be <= 1),4,,
+sigma1_drift_rms,8,,3.99662,rms drift of sigma_1,4,,
+weyl_max_ratio,8,,0.997045,max over blocks of max_i|dsigma_i| / ||E||_2 (must be <= 1),8,,
+sigma1_drift_rms,8,,8.01716,rms drift of sigma_1,8,,
+rounding_flip_pct,4,,8.43958,max sigma_1 drift 1.115; guaranteed safe bound b/2 = 2.0,,0.25,
+rounding_flip_pct,4,,0.0395833,max sigma_1 drift 1.163; guaranteed safe bound b/2 = 2.0,,0.5,
+rounding_flip_pct,4,,0,max sigma_1 drift 1.121; guaranteed safe bound b/2 = 2.0,,1,
+rounding_flip_pct,4,,0,max sigma_1 drift 1.210; guaranteed safe bound b/2 = 2.0,,1.5,
+rounding_flip_pct,4,,0,max sigma_1 drift 1.111; guaranteed safe bound b/2 = 2.0,,2,
+rounding_flip_pct,8,,0.025,max sigma_1 drift 1.131; guaranteed safe bound b/2 = 4.0,,0.25,
+rounding_flip_pct,8,,0,max sigma_1 drift 1.297; guaranteed safe bound b/2 = 4.0,,0.5,
+rounding_flip_pct,8,,0,max sigma_1 drift 1.140; guaranteed safe bound b/2 = 4.0,,1,
+rounding_flip_pct,8,,0,max sigma_1 drift 1.141; guaranteed safe bound b/2 = 4.0,,1.5,
+rounding_flip_pct,8,,0,max sigma_1 drift 1.116; guaranteed safe bound b/2 = 4.0,,2,
+rounding_flip_pct,16,,0,max sigma_1 drift 1.156; guaranteed safe bound b/2 = 8.0,,0.25,
+rounding_flip_pct,16,,0,max sigma_1 drift 1.073; guaranteed safe bound b/2 = 8.0,,0.5,
+rounding_flip_pct,16,,0,max sigma_1 drift 1.055; guaranteed safe bound b/2 = 8.0,,1,
+rounding_flip_pct,16,,0,max sigma_1 drift 1.149; guaranteed safe bound b/2 = 8.0,,1.5,
+rounding_flip_pct,16,,0,max sigma_1 drift 0.961; guaranteed safe bound b/2 = 8.0,,2,
+noise_ber_measured,8,,0.00416667,"sigma_1, float pixels (no clipping, no rounding)",2,,16
+noise_ber_predicted,8,,0.00633425,"2 Q(delta / 2s), drift ~ N(0, s^2)",2,,16
+noise_ber_measured,8,,4.67083,"sigma_1, float pixels (no clipping, no rounding)",4,,16
+noise_ber_predicted,8,,4.55003,"2 Q(delta / 2s), drift ~ N(0, s^2)",4,,16
+noise_ber_measured,8,,31.5958,"sigma_1, float pixels (no clipping, no rounding)",8,,16
+noise_ber_predicted,8,,31.7311,"2 Q(delta / 2s), drift ~ N(0, s^2)",8,,16
+noise_ber_measured,8,,0,"sigma_1, float pixels (no clipping, no rounding)",2,,24
+noise_ber_predicted,8,,1.97318e-07,"2 Q(delta / 2s), drift ~ N(0, s^2)",2,,24
+noise_ber_measured,8,,0.245833,"sigma_1, float pixels (no clipping, no rounding)",4,,24
+noise_ber_predicted,8,,0.26998,"2 Q(delta / 2s), drift ~ N(0, s^2)",4,,24
+noise_ber_measured,8,,13.4917,"sigma_1, float pixels (no clipping, no rounding)",8,,24
+noise_ber_predicted,8,,13.3614,"2 Q(delta / 2s), drift ~ N(0, s^2)",8,,24
+noise_ber_measured,8,,0,"sigma_1, float pixels (no clipping, no rounding)",2,,32
+noise_ber_predicted,8,,1.24419e-13,"2 Q(delta / 2s), drift ~ N(0, s^2)",2,,32
+noise_ber_measured,8,,0.00833333,"sigma_1, float pixels (no clipping, no rounding)",4,,32
+noise_ber_predicted,8,,0.00633425,"2 Q(delta / 2s), drift ~ N(0, s^2)",4,,32
+noise_ber_measured,8,,4.43542,"sigma_1, float pixels (no clipping, no rounding)",8,,32
+noise_ber_predicted,8,,4.55003,"2 Q(delta / 2s), drift ~ N(0, s^2)",8,,32
+noise_ber_measured,8,,0,"sigma_1, float pixels (no clipping, no rounding)",2,,48
+noise_ber_predicted,8,,3.55296e-31,"2 Q(delta / 2s), drift ~ N(0, s^2)",2,,48
+noise_ber_measured,8,,0,"sigma_1, float pixels (no clipping, no rounding)",4,,48
+noise_ber_predicted,8,,1.97318e-07,"2 Q(delta / 2s), drift ~ N(0, s^2)",4,,48
+noise_ber_measured,8,,0.322917,"sigma_1, float pixels (no clipping, no rounding)",8,,48
+noise_ber_predicted,8,,0.26998,"2 Q(delta / 2s), drift ~ N(0, s^2)",8,,48
+noise_ber_measured,8,,0,"sigma_1, float pixels (no clipping, no rounding)",2,,64
+noise_ber_predicted,8,,1.27775e-55,"2 Q(delta / 2s), drift ~ N(0, s^2)",2,,64
+noise_ber_measured,8,,0,"sigma_1, float pixels (no clipping, no rounding)",4,,64
+noise_ber_predicted,8,,1.24419e-13,"2 Q(delta / 2s), drift ~ N(0, s^2)",4,,64
+noise_ber_measured,8,,0.00416667,"sigma_1, float pixels (no clipping, no rounding)",8,,64
+noise_ber_predicted,8,,0.00633425,"2 Q(delta / 2s), drift ~ N(0, s^2)",8,,64

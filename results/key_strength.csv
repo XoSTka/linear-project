@@ -1,0 +1,10 @@
+scheme,what,value
+old: seed = CRC32(key),seeds tried per second (one core),52952.4
+old: seed = CRC32(key),false header candidates per 20000 seeds (need CRC check),88
+old: seed = CRC32(key),hours to try all 2^32 seeds (one core),22.5306
+old: seed = CRC32(key),hours to try all 2^32 seeds (8 cores),2.81632
+new: seed = PBKDF2-HMAC-SHA256,seconds per key guess (one core),0.0539803
+new: seed = PBKDF2-HMAC-SHA256,different seeds possible (log2),256
+new: seed = PBKDF2-HMAC-SHA256,years to try every 8 random lowercase letters (8 cores),44.6813
+new: seed = PBKDF2-HMAC-SHA256,years to try every 10 random letters+digits (8 cores),1.79579e+08
+new: seed = PBKDF2-HMAC-SHA256,seconds to find the key 'kmitl' in a 50-word list,2.71014

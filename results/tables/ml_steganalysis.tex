@@ -1,0 +1,17 @@
+\begin{table}[htbp]
+\caption{Trained detector (logistic regression on 11 pixel features), trained on the 100 pilot images and tested on the 400 evaluation images.}
+\label{tab:ml_steganalysis}
+\begin{tabular}{lrrrr}
+\toprule
+condition & test\_auc & test\_accuracy & auc\_blockiness8\_alone & auc\_phaseR\_alone \\
+\midrule
+stego, no key, full capacity & 1 & 1 & 0.907 & 1 \\
+stego, secret key, full capacity & 0.986 & 0.951 & 0.908 & 0.349 \\
+stego, secret key, full, delta 24 (3b) & 0.957 & 0.89 & 0.842 & 0.391 \\
+stego, secret key, full, delta 16 (2b) & 0.862 & 0.759 & 0.738 & 0.446 \\
+stego, secret key, short message (16 \%) & 0.785 & 0.695 & 0.686 & 0.463 \\
+watermark alpha 8 & 0.689 & 0.629 & 0.545 & 0.506 \\
+watermark alpha 16 & 0.849 & 0.774 & 0.591 & 0.486 \\
+\bottomrule
+\end{tabular}
+\end{table}

@@ -1,4 +1,4 @@
-"""Full watermark experiment on the 150-image sample (task #8, also data for #14).
+"""Full watermark experiment on the evaluation set (400 train+test images, never used for tuning).
 
 For every image, alpha and attack (`attacks.all_attacks`) it records
   * quality of the marked image (PSNR after 8-bit rounding),
@@ -8,10 +8,11 @@ For every image, alpha and attack (`attacks.all_attacks`) it records
   * shift_score (singular-value shift test) for all three.
 Output: results/watermark_full.csv (one row per image x alpha x attack).
 """
+
 import os
+
 os.environ.setdefault("OMP_NUM_THREADS", "1")
 os.environ.setdefault("OPENBLAS_NUM_THREADS", "1")
-import sys
 import time
 from multiprocessing import Pool
 from pathlib import Path
@@ -19,30 +20,22 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
+from svdmark import attacks, watermark
+from svdmark.data import eval_set, list_images, load_gray
+from svdmark.metrics import ber, ncc, ncc_centered, psnr
+
 ROOT = Path(__file__).resolve().parents[1]
-sys.path.insert(0, str(ROOT / "src"))
-from svdmark import attacks, watermark                      # noqa: E402
-from svdmark.data import list_images, load_gray, sample_images  # noqa: E402
-from svdmark.metrics import ber, ncc, psnr                  # noqa: E402
 
 ALPHAS = [2, 4, 8, 12, 16, 24]
 SEED_W = 7
 ATT = list(attacks.all_attacks())
-SAMPLE = sample_images(list_images(ROOT / "data" / "images"))
-
-
-def tag(name, lv):
-    return name if lv is None else f"{name}{lv}"
-
-
-def ncc_c(a, b):
-    return ncc(a - a.mean(), b - b.mean())
+SAMPLE = eval_set(list_images(ROOT / "data" / "images"))
 
 
 def sigmas_unmarked(i):
     """sigma of image i after every attack, never marked."""
     A = load_gray(SAMPLE["path"].iloc[i])
-    return {tag(n, lv): watermark.singular_values(attacks.apply(n, A, lv, seed=i)) for n, lv in ATT}
+    return {attacks.label(n, lv): watermark.singular_values(attacks.apply(n, A, lv, seed=i)) for n, lv in ATT}
 
 
 def work(i):
@@ -57,18 +50,31 @@ def work(i):
         Au = np.clip(np.rint(Aw), 0, 255)
         p = psnr(A, Au)
         for n, lv in ATT:
-            t = tag(n, lv)
+            t = attacks.label(n, lv)
             s_m = watermark.singular_values(attacks.apply(n, Au, lv, seed=i))
             W_m = watermark.extract_from_sigma(s_m, key)
             W_f = watermark.extract_from_sigma(own[t], key)
             W_o = watermark.extract_from_sigma(other[t], key)
-            rows.append(dict(image=SAMPLE["filename"].iloc[i], split=SAMPLE["split"].iloc[i], alpha=alpha, attack=t,
-                             psnr_u8=min(p, 99.0), identical=bool(np.isinf(p)),
-                             ncc=ncc(W, W_m), ncc_c=ncc_c(W, W_m), ber=ber(W, W_m > 0.5),
-                             shift=watermark.shift_from_sigma(s_m, key),
-                             fp_ncc=ncc(W, W_f), fp_ncc_c=ncc_c(W, W_f), fp_ber=ber(W, W_f > 0.5),
-                             fp_shift=watermark.shift_from_sigma(own[t], key),
-                             other_ncc=ncc(W, W_o), other_shift=watermark.shift_from_sigma(other[t], key)))
+            rows.append(
+                dict(
+                    image=SAMPLE["filename"].iloc[i],
+                    split=SAMPLE["split"].iloc[i],
+                    alpha=alpha,
+                    attack=t,
+                    psnr_u8=min(p, 99.0),
+                    identical=bool(np.isinf(p)),
+                    ncc=ncc(W, W_m),
+                    ncc_c=ncc_centered(W, W_m),
+                    ber=ber(W, W_m > 0.5),
+                    shift=watermark.shift_from_sigma(s_m, key),
+                    fp_ncc=ncc(W, W_f),
+                    fp_ncc_c=ncc_centered(W, W_f),
+                    fp_ber=ber(W, W_f > 0.5),
+                    fp_shift=watermark.shift_from_sigma(own[t], key),
+                    other_ncc=ncc(W, W_o),
+                    other_shift=watermark.shift_from_sigma(other[t], key),
+                )
+            )
     return rows
 
 
