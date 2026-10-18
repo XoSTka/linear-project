@@ -2,7 +2,6 @@ __pycache__/
 *.pyc
 .pytest_cache/
 .ipynb_checkpoints/
-data/
 logs/
 .DS_Store
 .ruff_cache/
