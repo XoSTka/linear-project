@@ -236,10 +236,45 @@ def logo_matrix(text: str, k: int) -> np.ndarray:
     return (np.asarray(img) > 127).astype(float)
 
 
+def _otsu(a: np.ndarray) -> float:
+    """Threshold that best splits the grey levels into two groups (Otsu's method)."""
+    hist = np.bincount(np.clip(a, 0, 255).astype(int).ravel(), minlength=256).astype(float)
+    p = hist / hist.sum()
+    omega, mu = np.cumsum(p), np.cumsum(p * np.arange(256))
+    with np.errstate(divide="ignore", invalid="ignore"):
+        between = (mu[-1] * omega - mu) ** 2 / (omega * (1 - omega))
+    return float(np.nanargmax(between))
+
+
 def logo_from_upload(data_url: str, k: int) -> np.ndarray:
-    img = decode_image(data_url).convert("L").resize((k, k), Image.LANCZOS)
-    a = np.asarray(img, dtype=float)
-    return (a > a.mean()).astype(float)
+    """Any picture -> k x k black-and-white logo (1 = ink, 0 = background).
+
+    Transparent parts count as background, the picture keeps its shape (padded to a square with the
+    background colour), the grey levels are split with Otsu's threshold, and the colour that covers the
+    border is taken as background so dark-on-white and white-on-dark logos both come out as white ink.
+    """
+    img = decode_image(data_url)
+    if img.mode in ("RGBA", "LA", "P"):
+        img = img.convert("RGBA")
+        flat = Image.new("RGBA", img.size, (255, 255, 255, 255))
+        flat.alpha_composite(img)
+        img = flat
+    g = np.asarray(img.convert("L"), dtype=float)
+    border = np.concatenate([g[0], g[-1], g[:, 0], g[:, -1]])
+    bg = float(np.median(border))
+    h, w = g.shape
+    side = max(h, w)
+    sq = np.full((side, side), bg)
+    sq[(side - h) // 2 : (side - h) // 2 + h, (side - w) // 2 : (side - w) // 2 + w] = g
+    small = np.asarray(Image.fromarray(sq.astype(np.uint8)).resize((k, k), Image.LANCZOS), dtype=float)
+    t = _otsu(small)
+    ink = small > t if bg <= t else small <= t
+    return ink.astype(float)
+
+
+def logo_preview(logo_image: str, k: int = 320) -> dict:
+    W = logo_from_upload(logo_image, int(k))
+    return {"logo": encode_png(W * 255), "ink": round(float(W.mean()), 3), "k": int(k)}
 
 
 def wm_embed(cover: str, alpha: float, logo_text: str = "", logo_image: str | None = None) -> dict:

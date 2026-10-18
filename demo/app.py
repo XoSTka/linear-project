@@ -39,6 +39,7 @@ ROUTES = {
         d["image"], d["text"], d.get("key", ""), d["mode"], d["kind"], d.get("level"), bool(d.get("ecc"))
     ),
     "/api/wm/embed": lambda d: core.wm_embed(d["cover"], d["alpha"], d.get("logo_text", ""), d.get("logo_image")),
+    "/api/wm/logo-preview": lambda d: core.logo_preview(d["logo_image"], d.get("k", 320)),
     "/api/wm/extract": lambda d: core.wm_extract(d["image"], d["key_id"]),
     "/api/wm/attack": lambda d: core.wm_attack(d["image"], d["kind"], d.get("level")),
     "/api/case/run": lambda d: core.run_case(d.get("id", ""), d.get("image")),

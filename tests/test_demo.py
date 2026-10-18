@@ -90,3 +90,43 @@ def test_case_can_run_on_another_photo(cover):
     assert r["custom_image"] and r["runs"][0]["status"] == "ok"
     r = core.run_case("S3", cover["image"])  # an uploaded photo (data URL)
     assert r["runs"][0]["status"] != "ok"
+
+
+def _png_url(img):
+    import base64
+    import io
+
+    buf = io.BytesIO()
+    img.save(buf, format="PNG")
+    return "data:image/png;base64," + base64.b64encode(buf.getvalue()).decode()
+
+
+def test_uploaded_logo_becomes_white_ink_on_black():
+    from PIL import Image, ImageDraw
+
+    dark_on_white = Image.new("RGB", (300, 150), "white")
+    ImageDraw.Draw(dark_on_white).rectangle([100, 25, 200, 125], fill="navy")
+    transparent = Image.new("RGBA", (200, 200), (0, 0, 0, 0))
+    ImageDraw.Draw(transparent).ellipse([50, 50, 150, 150], fill=(200, 0, 0, 255))
+    light_on_dark = Image.new("RGB", (150, 300), "black")
+    ImageDraw.Draw(light_on_dark).rectangle([25, 100, 125, 200], fill="yellow")
+    for img in (dark_on_white, transparent, light_on_dark):
+        W = core.logo_from_upload(_png_url(img), 64)
+        assert W.shape == (64, 64)
+        assert set(np.unique(W)) <= {0.0, 1.0}
+        assert W[0, 0] == 0 and W[32, 32] == 1  # background black, shape in the middle white
+        assert 0.05 < W.mean() < 0.6
+
+
+def test_logo_preview_and_embed_with_uploaded_logo():
+    from PIL import Image, ImageDraw
+
+    logo = Image.new("RGB", (100, 100), "white")
+    ImageDraw.Draw(logo).ellipse([20, 20, 80, 80], fill="black")
+    prev = core.logo_preview(_png_url(logo), 32)
+    assert prev["logo"].startswith("data:image/png;base64,") and prev["k"] == 32
+    cover = _png_url(Image.fromarray((np.arange(64 * 96) % 251).reshape(64, 96).astype(np.uint8)))
+    r = core.wm_embed(cover, 8, logo_image=_png_url(logo))
+    assert r["k"] == 64
+    ex = core.wm_extract(r["image"], r["key_id"])
+    assert ex["shift"] > 0.8

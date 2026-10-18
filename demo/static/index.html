@@ -75,6 +75,7 @@ input.mono-in{font-family:var(--mono)}
 a.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;text-decoration:none}
 a.btn[aria-disabled=true]{opacity:.45;pointer-events:none}
 .seg{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));border:1px solid var(--line);border-radius:4px;overflow:hidden}
+.seg.two{grid-template-columns:repeat(2,minmax(0,1fr))}
 .seg button{height:36px;border:0;background:var(--paper);color:var(--ink2)}
 .seg button+button{border-left:1px solid var(--line)}
 .seg button[aria-pressed=true]{background:var(--accent);color:#fff;font-weight:600}
@@ -411,12 +412,23 @@ nav.tabs button:hover{color:var(--ink)}
           <div class="hint mono" data-dims>—</div>
           <div class="hint" data-notes></div>
         </div>
+        <div>
+          <span class="f" id="w-logo-label">Logo</span>
+          <div class="seg two" role="group" aria-labelledby="w-logo-label" id="w-logo-kind">
+            <button type="button" data-kind="text" aria-pressed="true">พิมพ์ตัวอักษร</button>
+            <button type="button" data-kind="image" aria-pressed="false">ใช้รูปของฉัน</button>
+          </div>
+        </div>
         <div style="display:flex;gap:10px;align-items:flex-end">
-          <div style="flex:1;min-width:0">
-            <label class="f" for="w-logo">Logo <small>(A–Z, 0–9, ไม่เกิน 8 ตัว)</small></label>
+          <div style="flex:1;min-width:0" id="w-logo-text-box">
+            <label class="f" for="w-logo">ข้อความ <small>(A–Z, 0–9, ไม่เกิน 8 ตัว)</small></label>
             <input type="text" id="w-logo" class="mono-in" value="LA2026" maxlength="8" autocomplete="off">
           </div>
-          <img id="w-logo-img" alt="Logo ที่จะฝัง" width="58" height="58" style="border:1px solid var(--line);image-rendering:pixelated;background:#000" hidden>
+          <div style="flex:1;min-width:0" id="w-logo-file-box" hidden>
+            <label class="btn sec" style="display:flex;align-items:center;justify-content:center">เลือกรูปโลโก้<input type="file" accept="image/*" id="w-logo-file" hidden></label>
+            <div class="hint" id="w-logo-file-note">โลโก้พื้นใสหรือพื้นสีเรียบได้ผลดีที่สุด รูปจะถูกแปลงเป็นขาวดำ</div>
+          </div>
+          <img id="w-logo-img" alt="Logo ที่จะฝัง" width="58" height="58" style="border:1px solid var(--line);image-rendering:pixelated;background:#000;cursor:zoom-in" hidden>
         </div>
         <div>
           <div style="display:flex;justify-content:space-between;align-items:baseline">
@@ -831,6 +843,38 @@ $('#w-alpha').oninput = () => {
   resetWm();
 };
 $('#w-logo').oninput = () => resetWm();
+S.wm.logoKind = 'text'; S.wm.logoImage = null; S.wm.logoPreview = null;
+function showLogoThumb() {
+  const T = S.wm, img = $('#w-logo-img');
+  const src = T.logoKind === 'image' ? T.logoPreview : null;
+  img.hidden = !src; if (src) img.src = src;
+}
+$$('#w-logo-kind button').forEach(b => b.onclick = () => {
+  const T = S.wm; T.logoKind = b.dataset.kind;
+  $$('#w-logo-kind button').forEach(x => x.setAttribute('aria-pressed', String(x === b)));
+  $('#w-logo-text-box').hidden = T.logoKind !== 'text';
+  $('#w-logo-file-box').hidden = T.logoKind !== 'image';
+  showErr($('#w-err'), '');
+  showLogoThumb(); resetWm();
+});
+$('#w-logo-file').onchange = () => {
+  const f = $('#w-logo-file').files[0]; if (!f) return;
+  const rd = new FileReader();
+  rd.onload = async () => {
+    const T = S.wm;
+    const r = await api('/api/wm/logo-preview', {logo_image: rd.result, k: T.k || 320});
+    if (r.error) { showErr($('#w-err'), 'เปิดรูปโลโก้ไม่ได้: ' + r.error); return; }
+    showErr($('#w-err'), '');
+    T.logoImage = rd.result; T.logoPreview = r.logo;
+    const pct = Math.round(r.ink * 100);
+    const warn = (r.ink < 0.03 || r.ink > 0.97) ? ' · แทบเป็นสีเดียวทั้งรูป ลองรูปที่ตัดกับพื้นชัดกว่านี้' : '';
+    $('#w-logo-file-note').textContent = `${f.name} → ขาวดำ ส่วนสีขาว ${pct}%${warn}`;
+    showLogoThumb(); resetWm();
+  };
+  rd.readAsDataURL(f);
+  $('#w-logo-file').value = '';
+};
+$('#w-logo-img').onclick = () => { const img = $('#w-logo-img'); if (!img.hidden) openZoom([{src: img.src, cap: 'โลโก้ที่จะฝัง (ขาวดำ)'}], 'โลโก้ที่จะฝัง'); };
 function resetWm() {
   const T = S.wm; Object.assign(T, {marked: null, keyId: null, diff: null, check: null, view: 'marked'});
   $('#w-result').innerHTML = ''; $('#w-check').disabled = true; $('#w-stats').textContent = '';
@@ -863,7 +907,10 @@ $('#w-compare')._redraw = drawWm;
 $$('#w-views button').forEach(b => b.onclick = () => { S.wm.view = b.dataset.view; drawWm(); });
 $('#w-embed').onclick = async () => {
   const T = S.wm, alpha = +$('#w-alpha').value;
-  const r = await api('/api/wm/embed', {cover: T.cover, alpha, logo_text: $('#w-logo').value});
+  if (T.logoKind === 'image' && !T.logoImage) { showErr($('#w-err'), 'เลือกรูปโลโก้ก่อน หรือเปลี่ยนไปใช้แบบพิมพ์ตัวอักษร'); return; }
+  const body = {cover: T.cover, alpha, logo_text: $('#w-logo').value};
+  if (T.logoKind === 'image') body.logo_image = T.logoImage;
+  const r = await api('/api/wm/embed', body);
   if (r.error) { showErr($('#w-err'), r.error); return; }
   showErr($('#w-err'), '');
   Object.assign(T, {marked: r.image, keyId: r.key_id, psnr: r.psnr, diff: r.diff, logo: r.logo, k: r.k, check: null, view: 'marked'});
