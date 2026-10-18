@@ -31,9 +31,9 @@ CASES_FILE = Path(__file__).resolve().parent / "test_cases.json"
 
 # The three modes offered to the user.  All use sigma_1 and delta = 4b (about 40.8 dB), as chosen in the pilot.
 MODES = {
-    "robust": {"b": 16, "delta": 64.0, "label": "ทนทาน (บล็อก 16×16)"},
-    "balanced": {"b": 8, "delta": 32.0, "label": "สมดุล (บล็อก 8×8)"},
-    "capacity": {"b": 4, "delta": 16.0, "label": "จุเยอะ (บล็อก 4×4)"},
+    "robust": {"b": 16, "delta": 64.0, "label": "Robust"},
+    "balanced": {"b": 8, "delta": 32.0, "label": "Balanced"},
+    "capacity": {"b": 4, "delta": 16.0, "label": "Capacity"},
 }
 
 # Sample photos from the BSDS500 evaluation set (shown only if data/images exists on this computer).
@@ -47,9 +47,9 @@ SAMPLES = [
 ]
 
 STATUS_TEXT = {
-    "ok": "พบข้อความ และตรวจ CRC ผ่าน: ข้อความถูกต้องครบทุกตัวอักษร",
-    "no_message": "ไม่พบข้อความ: รูปนี้อาจไม่เคยซ่อนอะไร หรือรหัสลับ / โหมดไม่ตรงกับตอนซ่อน",
-    "damaged": "พบหัวข้อความ แต่ CRC ไม่ผ่าน: ข้อความเสียหาย (รูปถูกบีบอัด ใส่สัญญาณรบกวน หรือดัดแปลง)",
+    "ok": "อ่านได้ครบ: CRC ผ่าน ได้ข้อความเดิมทุกตัวอักษร",
+    "no_message": "ไม่พบข้อความ: รูปนี้ไม่เคยซ่อนอะไร หรือ key / mode ไม่ตรงกับตอนซ่อน",
+    "damaged": "ข้อความเสียหาย: เจอข้อความ แต่ CRC ไม่ผ่าน (รูปถูกบีบอัด มี noise หรือถูกแก้)",
 }
 
 
@@ -74,14 +74,14 @@ def gray_matrix(data_url: str, allow_resize: bool) -> tuple[np.ndarray, list[str
     if allow_resize and max(img.size) > MAX_SIDE:
         s = MAX_SIDE / max(img.size)
         img = img.resize((max(16, round(img.width * s)), max(16, round(img.height * s))), Image.LANCZOS)
-        notes.append(f"ย่อรูปให้ด้านยาวไม่เกิน {MAX_SIDE} พิกเซล เพื่อให้คำนวณเร็ว")
+        notes.append(f"ย่อให้ด้านยาวไม่เกิน {MAX_SIDE} px")
     if img.mode not in ("L",):
-        notes.append("แปลงเป็นภาพขาวดำ (ระดับเทา) เพราะวิธีของเราทำกับภาพเทา")
+        notes.append("แปลงเป็นภาพเทา")
     g = to_gray(img)
     h, w = g.shape
     g = crop_to_multiple(g, 16)
     if g.shape != (h, w):
-        notes.append(f"ตัดขอบจาก {w}×{h} เป็น {g.shape[1]}×{g.shape[0]} ให้ด้านหาร 16 ลงตัว")
+        notes.append(f"ตัดขอบจาก {w}×{h} (ด้านต้องหาร 16 ลงตัว)")
     return g, notes
 
 
@@ -133,10 +133,9 @@ def stego_embed(cover: str, text: str, key: str, mode: str, ecc: bool = False) -
     need, cap = stego.message_bits_needed(text, ecc), stego.capacity(A.shape, p["b"])
     if need > cap:
         return {
-            "error": f"ข้อความยาว {len(text.encode('utf-8'))} ไบต์ (ต้องใช้ {need} บิต"
-            f"{' รวมบิตแก้ผิด' if ecc else ''}) แต่รูปนี้ในโหมด{p['label']}"
-            f"{' แบบแก้บิตผิด' if ecc else ''} จุได้ประมาณ {stego.text_capacity_bytes(A.shape, p['b'], ecc)} ไบต์ "
-            f"ลองย่อข้อความ{' ปิดการแก้บิตผิด' if ecc else ''} หรือเปลี่ยนเป็นโหมดที่จุมากกว่า"
+            "error": f"ข้อความยาว {len(text.encode('utf-8'))} bytes แต่รูปนี้ใน mode {p['label']}"
+            f"{' + ECC' if ecc else ''} จุได้ {stego.text_capacity_bytes(A.shape, p['b'], ecc)} bytes "
+            f"ลองย่อข้อความ{' ปิด ECC' if ecc else ''} หรือเปลี่ยนเป็น mode ที่จุมากกว่า"
         }
     r = stego.embed_text(A, text, p["delta"], p["b"], key=_key(key), ecc=ecc)
     diff = np.abs(r.image - A)
@@ -161,14 +160,14 @@ def stego_extract(image: str, key: str, mode: str, ecc: bool = False) -> dict:
 
 
 ATTACK_LABEL = {
-    "none": "ไม่โจมตี",
-    "jpeg": "บันทึกเป็น JPEG คุณภาพ {}",
-    "noise": "สัญญาณรบกวน σ = {}",
-    "crop": "เจาะกลางภาพ {:.0%}",
-    "resize": "ย่อเหลือ {:.0%} แล้วขยายกลับ",
-    "blur": "เบลอ (รัศมี {} พิกเซล)",
-    "median": "median filter {0}×{0}",
-    "rotate": "หมุน {}°",
+    "none": "none",
+    "jpeg": "JPEG Q{}",
+    "noise": "Gaussian noise σ={}",
+    "crop": "Crop center {:.0%}",
+    "resize": "Resize {:.0%} → 100%",
+    "blur": "Blur r={:g}",
+    "median": "Median {0}×{0}",
+    "rotate": "Rotate {:g}°",
 }
 
 
@@ -273,18 +272,23 @@ def wm_extract(image: str, key_id: str) -> dict:
     Ws = watermark.extract_from_sigma(s, key)
     shift = watermark.shift_from_sigma(s, key)
     nc = ncc(W, Ws)
-    if shift >= 0.8:
-        verdict = "shift score สูง: ค่า σ ของรูปนี้ขยับไปทางเดียวกับตอนฝังลายน้ำ → มีหลักฐานว่าฝังลายน้ำจริง"
-    elif shift <= 0.3:
-        verdict = "shift score ต่ำ: ค่า σ ไม่ได้ขยับไปทางที่การฝังทำ → ไม่มีหลักฐานว่ารูปนี้ถูกฝังลายน้ำ (แม้โลโก้จะดูเหมือนออกมาก็ตาม)"
-    else:
-        verdict = "shift score อยู่กลางๆ: รูปน่าจะถูกดัดแปลง (เช่น บีบอัดหรือมีสัญญาณรบกวน) ตัดสินแน่ชัดไม่ได้"
+    evidence, verdict = _wm_verdict(shift)
     return {
         "logo": encode_png(np.clip(Ws, 0, 1) * 255),
         "ncc": round(nc, 4),
         "shift": round(shift, 4),
+        "evidence": evidence,
         "verdict": verdict,
     }
+
+
+def _wm_verdict(shift: float) -> tuple[str, str]:
+    """Thresholds 0.8 / 0.3 are rough demo values (results/findings.md: they do not hold after blurring)."""
+    if shift >= 0.8:
+        return "yes", "มีลายน้ำของเรา: σ ของรูปขยับไปทางเดียวกับตอนฝัง"
+    if shift <= 0.3:
+        return "no", "ไม่มีลายน้ำของเรา: σ ไม่ได้ขยับแบบตอนฝัง (แม้โลโก้จะขึ้นมาก็ตาม)"
+    return "unsure", "ไม่แน่ใจ: รูปน่าจะถูกแก้ไข (เช่น บีบอัด หรือมี noise) ตัดสินแน่ชัดไม่ได้"
 
 
 def wm_attack(image: str, kind: str, level) -> dict:
@@ -301,9 +305,7 @@ def test_cases() -> list[dict]:
 
 
 def log_result(tester: str, case_id: str, observed: str, matched: bool, note: str = "") -> dict:
-    tester = tester.strip()
-    if not tester:
-        return {"error": "กรุณาใส่ชื่อผู้ทดสอบ"}
+    tester = tester.strip() or "ไม่ระบุชื่อ"
     case = next((c for c in test_cases() if c["id"] == case_id), None)
     if case is None:
         return {"error": f"ไม่รู้จักกรณีทดสอบ {case_id}"}
@@ -338,3 +340,134 @@ def log_summary() -> dict:
         "cases_done": len({r["case_id"] for r in rows}),
         "total": len(rows),
     }
+
+
+def log_csv() -> bytes:
+    """The whole log file (UTF-8 with BOM so Excel shows Thai correctly); header only if nothing was logged yet."""
+    if LOG_FILE.exists():
+        return LOG_FILE.read_bytes()
+    return ("\ufeff" + ",".join(LOG_FIELDS) + "\r\n").encode("utf-8")
+
+
+# ----------------------------------------------------------------------------------- prepared cases
+def sample_matrix(name: str) -> np.ndarray:
+    """A sample photo from data/images as the grayscale matrix the demo uses (sides cut to multiples of 16)."""
+    if name not in dict(SAMPLES):
+        raise ValueError(f"unknown sample {name!r}")
+    hits = list((ROOT / "data" / "images").glob(f"*/{name}"))
+    if not hits:
+        raise FileNotFoundError(f"ไม่พบรูปตัวอย่าง {name} (ยังไม่ได้วางชุด BSDS500 ไว้ใน data/images)")
+    return crop_to_multiple(to_gray(Image.open(hits[0])), 16)
+
+
+def _check(expect: dict | None, r: dict) -> bool | None:
+    """Did one run give the expected result?  None = this run has no automatic check (shown for comparison)."""
+    if not expect:
+        return None
+    if "refused" in expect:
+        return "error" in r
+    if "status" in expect:
+        return r.get("status") == expect["status"] and r.get("text") == r.get("sent_text")
+    if "not_ok" in expect:
+        return r.get("status") in ("no_message", "damaged")
+    ok = True
+    if "shift_min" in expect:
+        ok &= r["shift"] >= expect["shift_min"]
+    if "shift_max" in expect:
+        ok &= r["shift"] <= expect["shift_max"]
+    if "shift_below" in expect:
+        ok &= r["shift"] < expect["shift_below"]
+    if "psnr_min" in expect:
+        ok &= r["psnr"] is None or r["psnr"] >= expect["psnr_min"]
+    return bool(ok)
+
+
+def _case_matrix(run: dict, image: str | None) -> np.ndarray:
+    """The run's own sample photo, or the photo the user picked instead (a sample name or an uploaded data URL)."""
+    if not image:
+        return sample_matrix(run["image"])
+    if image.startswith("data:"):
+        return gray_matrix(image, allow_resize=True)[0]
+    return sample_matrix(image)
+
+
+def _run_stego(run: dict, image: str | None = None) -> dict:
+    A = _case_matrix(run, image)
+    p = _mode(run["mode"])
+    out = {"label": run["label"], "cover": encode_png(A), "sent_text": run["text"]}
+    if run["read_original"]:
+        S = A
+    else:
+        need, cap = stego.message_bits_needed(run["text"], run["ecc"]), stego.capacity(A.shape, p["b"])
+        if need > cap:
+            byts = stego.text_capacity_bytes(A.shape, p["b"], run["ecc"])
+            n = len(run["text"].encode("utf-8"))
+            out["error"] = f"ไม่ซ่อน: ข้อความยาว {n} bytes แต่ mode {p['label']} จุได้ {byts} bytes"
+            return out
+        r = stego.embed_text(A, run["text"], p["delta"], p["b"], key=_key(run["key"]), ecc=run["ecc"])
+        S = r.image
+        out["stego"] = encode_png(S)
+        out["psnr"] = round(psnr(A, S), 2)
+    kind, level = run["attack"]
+    B = attacks.apply(kind, S, level, seed=1) if kind != "none" else S
+    out["attack"] = ATTACK_LABEL[kind].format(level)
+    if kind != "none":
+        out["attacked"] = encode_png(B)
+    read_key = _key(run["read_key"])
+    text, status, fixed = stego.extract_text(B, p["delta"], p["b"], key=read_key, ecc=run["ecc"], details=True)
+    out.update(status=status, text=text, explain=STATUS_TEXT[status], corrected=fixed)
+    if not run["read_original"]:
+        frame = stego.text_to_bits(run["text"])
+        sent = ecc_mod.encode(frame) if run["ecc"] else frame
+        got = stego.extract_bits(B, len(sent), p["delta"], p["b"], key=_key(run["read_key"]))
+        out["bits"], out["wrong_bits"] = len(sent), int((got != sent).sum())
+    return out
+
+
+def _run_wm(run: dict, image: str | None = None) -> dict:
+    A = _case_matrix(run, image)
+    W = logo_matrix(run["logo"], min(A.shape))
+    Aw, key = watermark.embed(A, W, float(run["alpha"]))
+    Au = np.clip(np.rint(Aw), 0, 255)
+    T = Au if run["target"] == "marked" else A
+    kind, level = run["attack"]
+    B = attacks.apply(kind, T, level, seed=1) if kind != "none" else T
+    s = watermark.singular_values(B)
+    shift = watermark.shift_from_sigma(s, key)
+    evidence, verdict = _wm_verdict(shift)
+    p = psnr(A, Au)
+    return {
+        "label": run["label"],
+        "target": run["target"],
+        "cover": encode_png(A),
+        "stego": encode_png(Au),
+        "attacked": encode_png(B) if kind != "none" else None,
+        "attack": ATTACK_LABEL[kind].format(level),
+        "psnr": None if np.isinf(p) else round(p, 2),
+        "logo": encode_png(np.clip(watermark.extract_from_sigma(s, key), 0, 1) * 255),
+        "ncc": round(ncc(W, watermark.extract_from_sigma(s, key)), 4),
+        "shift": round(shift, 4),
+        "evidence": evidence,
+        "verdict": verdict,
+    }
+
+
+def run_case(case_id: str, image: str | None = None) -> dict:
+    """Run one prepared case end to end (hide or watermark -> attack -> read back) and check it automatically.
+
+    `image` (optional) replaces the case's own photo(s): a sample name from SAMPLES or an uploaded data URL.
+    The expected results were written for the case's own photos, so another photo can change the outcome.
+    """
+    case = next((c for c in test_cases() if c["id"] == case_id), None)
+    if case is None:
+        return {"error": f"ไม่รู้จักกรณีทดสอบ {case_id}"}
+    runner = _run_stego if case["kind"] == "stego" else _run_wm
+    runs = [runner(r, image) for r in case["runs"]]
+    for spec, r in zip(case["runs"], runs, strict=True):
+        r["auto"] = _check(spec.get("expect"), r)
+        r.pop("sent_text", None)
+    for i, spec in enumerate(case["runs"]):  # cross-run check: marked image must score higher than the next one
+        if (spec.get("expect") or {}).get("higher_than_next"):
+            runs[i]["auto"] = runs[i]["shift"] > runs[i + 1]["shift"]
+    checks = [r["auto"] for r in runs if r["auto"] is not None]
+    return {"id": case_id, "runs": runs, "auto": all(checks) if checks else None, "custom_image": bool(image)}

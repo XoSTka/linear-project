@@ -4,7 +4,7 @@
     python demo/app.py --port 9000 --no-browser
 
 Needs only the packages in requirements.txt (the web server is Python's built-in http.server).
-Everything runs on this computer; no image leaves it.  Friend-test results are saved to demo/demo_log.csv.
+Everything runs on this computer; no image leaves it.  Test results are saved to demo/demo_log.csv.
 """
 
 from __future__ import annotations
@@ -20,6 +20,14 @@ from pathlib import Path
 import core  # demo/core.py (Python puts the script's own folder on the import path)
 
 STATIC = Path(__file__).resolve().parent / "static"
+CONTENT_TYPES = {
+    ".woff2": "font/woff2",
+    ".css": "text/css; charset=utf-8",
+    ".js": "text/javascript; charset=utf-8",
+    ".png": "image/png",
+    ".svg": "image/svg+xml",
+    ".txt": "text/plain; charset=utf-8",
+}
 
 ROUTES = {
     "/api/load": lambda d: core.load_cover(d["image"]),
@@ -33,6 +41,7 @@ ROUTES = {
     "/api/wm/embed": lambda d: core.wm_embed(d["cover"], d["alpha"], d.get("logo_text", ""), d.get("logo_image")),
     "/api/wm/extract": lambda d: core.wm_extract(d["image"], d["key_id"]),
     "/api/wm/attack": lambda d: core.wm_attack(d["image"], d["kind"], d.get("level")),
+    "/api/case/run": lambda d: core.run_case(d.get("id", ""), d.get("image")),
     "/api/log": lambda d: core.log_result(
         d.get("tester", ""), d.get("case_id", ""), d.get("observed", ""), bool(d.get("matched")), d.get("note", "")
     ),
@@ -63,6 +72,14 @@ class Handler(BaseHTTPRequestHandler):
                     "log": core.log_summary(),
                 }
             )
+        elif self.path == "/api/log.csv":
+            self._send(200, core.log_csv(), "text/csv; charset=utf-8")
+        elif self.path.startswith("/static/"):
+            f = (STATIC / self.path[len("/static/") :].split("?")[0]).resolve()
+            if f.is_file() and STATIC.resolve() in f.parents and f.suffix in CONTENT_TYPES:
+                self._send(200, f.read_bytes(), CONTENT_TYPES[f.suffix])
+            else:
+                self._send(404, b"not found", "text/plain")
         else:
             self._send(404, b"not found", "text/plain")
 

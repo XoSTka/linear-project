@@ -62,3 +62,13 @@ def test_errors_come_back_as_json(base_url):
     assert status == 500 and "error" in json.loads(body)
     status, _ = call(base_url, "/missing.html")
     assert status == 404
+
+
+def test_static_fonts_csv_and_case_run(base_url):
+    status, body = call(base_url, "/static/fonts/sarabun-thai-400-normal.woff2")
+    assert status == 200 and body[:4] == b"wOF2"
+    assert call(base_url, "/static/../core.py")[0] == 404  # no files outside demo/static
+    status, body = call(base_url, "/api/log.csv")
+    assert status == 200 and b"tester" in body
+    status, body = call(base_url, "/api/case/run", {"id": "nope"})
+    assert status == 200 and "error" in json.loads(body)

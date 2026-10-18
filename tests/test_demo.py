@@ -58,4 +58,35 @@ def test_ecc_mode_round_trip_and_extra_attack(cover):
     assert core.stego_extract(e["image"], "k", "balanced", ecc=True)["text"] == "นัดบ่ายสาม"
     r = core.stego_attack_test(e["image"], "นัดบ่ายสาม", "k", "balanced", "rotate", 1.0, ecc=True)
     assert r["status"] != "ok"  # rotation breaks the block grid: an honest failure
-    assert core.attack_image(cover["image"], "resize", 0.5)[2].startswith("ย่อ")
+    assert core.attack_image(cover["image"], "resize", 0.5)[2].startswith("Resize")
+
+
+HAVE_SAMPLES = all(list((core.ROOT / "data" / "images").glob(f"*/{n}")) for n, _ in core.SAMPLES)
+
+
+@pytest.mark.skipif(not HAVE_SAMPLES, reason="BSDS500 sample photos not in data/images")
+def test_every_prepared_case_gives_the_expected_result():
+    for case in core.test_cases():
+        r = core.run_case(case["id"])
+        got = [(x["label"], x.get("status") or x.get("shift"), x["auto"]) for x in r["runs"]]
+        assert r["auto"] is True, (case["id"], got)
+
+
+def test_prepared_cases_are_well_formed():
+    cases = core.test_cases()
+    assert len(cases) >= 10 and len({c["id"] for c in cases}) == len(cases)
+    for c in cases:
+        assert c["kind"] in ("stego", "wm") and c["runs"] and c["title"] and c["expected"] and c["settings"]
+        for r in c["runs"]:
+            assert r["image"] in dict(core.SAMPLES)
+            assert r["attack"][0] in core.ATTACK_LABEL
+            if c["kind"] == "stego":
+                assert r["mode"] in core.MODES
+
+
+@pytest.mark.skipif(not HAVE_SAMPLES, reason="BSDS500 sample photos not in data/images")
+def test_case_can_run_on_another_photo(cover):
+    r = core.run_case("S2", "189029.jpg")
+    assert r["custom_image"] and r["runs"][0]["status"] == "ok"
+    r = core.run_case("S3", cover["image"])  # an uploaded photo (data URL)
+    assert r["runs"][0]["status"] != "ok"

@@ -3,441 +3,1075 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>เดโม SVD ซ่อนข้อมูลในภาพ</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;600&display=swap">
+<title>svdmark — ซ่อนข้อความและ watermark ในรูปด้วย SVD</title>
 <style>
+/* fonts are bundled in static/fonts so the demo also works without internet (SIL OFL, see LICENSE files) */
+@font-face{font-family:Sarabun;font-weight:400;src:url(/static/fonts/sarabun-thai-400-normal.woff2) format("woff2");unicode-range:U+0E01-0E5B,U+200C-200D,U+25CC}
+@font-face{font-family:Sarabun;font-weight:400;src:url(/static/fonts/sarabun-latin-400-normal.woff2) format("woff2")}
+@font-face{font-family:Sarabun;font-weight:600;src:url(/static/fonts/sarabun-thai-600-normal.woff2) format("woff2");unicode-range:U+0E01-0E5B,U+200C-200D,U+25CC}
+@font-face{font-family:Sarabun;font-weight:600;src:url(/static/fonts/sarabun-latin-600-normal.woff2) format("woff2")}
+@font-face{font-family:Sarabun;font-weight:700;src:url(/static/fonts/sarabun-thai-700-normal.woff2) format("woff2");unicode-range:U+0E01-0E5B,U+200C-200D,U+25CC}
+@font-face{font-family:Sarabun;font-weight:700;src:url(/static/fonts/sarabun-latin-700-normal.woff2) format("woff2")}
+@font-face{font-family:"Plex Mono";font-weight:400;src:url(/static/fonts/ibm-plex-mono-latin-400-normal.woff2) format("woff2")}
+@font-face{font-family:"Plex Mono";font-weight:600;src:url(/static/fonts/ibm-plex-mono-latin-600-normal.woff2) format("woff2")}
+
 :root{
-  --bg:#f5f4f0; --panel:#ffffff; --ink:#1d1c1a; --muted:#66635c; --line:#e2dfd6; --soft:#eeece5;
-  --accent:#2a5bd7; --accent-ink:#ffffff; --ok:#1d7a4f; --ok-bg:#e3f3ea; --warn:#9a5b00; --warn-bg:#fbefd9;
-  --bad:#b3261e; --bad-bg:#fbe5e3; --none:#55606e; --none-bg:#e9edf2;
-  --radius:12px; --mono:"IBM Plex Mono",ui-monospace,Consolas,monospace;
-  --sans:"IBM Plex Sans Thai","Leelawadee UI","Tahoma",system-ui,sans-serif;
+  --ink:#18181B; --ink2:#3F3F46; --muted:#52525B; --line:#D4D4D8; --line2:#E4E4E7; --paper:#FFFFFF; --ground:#ECECEE; --soft:#FAFAFA;
+  --accent:#2563EB; --accent-dark:#1D4ED8; --accent-bg:#EFF4FF; --stage:#1F2430; --stagebar:#161A23;
+  --step1:#2563EB; --step2:#EA580C; --step3:#16A34A;
+  --ok:#15803D; --ok-bg:#EEF8F1; --ok-line:#BBE3C8; --bad:#B91C1C; --bad-bg:#FDF1F1; --warn:#92400E; --warn-bg:#FEF6E7; --warn-line:#F1D8A8;
+  --none:#3F3F46; --none-bg:#F4F4F5;
+  --sans:Sarabun,"Leelawadee UI",Tahoma,sans-serif; --mono:"Plex Mono",ui-monospace,Consolas,monospace;
+  color-scheme:light;
 }
-@media (prefers-color-scheme: dark){:root{
-  --bg:#141412; --panel:#1d1c1a; --ink:#ecebe6; --muted:#a19e95; --line:#34322e; --soft:#262522;
-  --accent:#7aa2ff; --accent-ink:#0d1220; --ok:#6fd3a0; --ok-bg:#16302a; --warn:#f0b75a; --warn-bg:#33270f;
-  --bad:#ff8a80; --bad-bg:#3a1a18; --none:#b2bccb; --none-bg:#262b33; color-scheme:dark}}
 *{box-sizing:border-box}
-body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.6 var(--sans)}
-header{background:var(--panel);border-bottom:1px solid var(--line);padding:18px max(16px,4vw) 0}
-header h1{margin:0;font-size:22px;letter-spacing:-.01em}
-header p{margin:2px 0 12px;color:var(--muted);font-size:14px}
-nav{display:flex;gap:4px;flex-wrap:wrap}
-nav button{border:0;background:none;color:var(--muted);font:inherit;font-weight:600;padding:10px 14px;border-bottom:3px solid transparent;cursor:pointer}
-nav button[aria-selected=true]{color:var(--ink);border-color:var(--accent)}
-main{max-width:1100px;margin:0 auto;padding:20px max(16px,3vw) 60px}
-section.tab{display:none}section.tab.on{display:block}
-.card{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:18px;margin:0 0 16px}
-.card h2{margin:0 0 4px;font-size:18px;display:flex;gap:10px;align-items:center}
-.step{display:inline-grid;place-items:center;width:26px;height:26px;border-radius:50%;background:var(--accent);color:var(--accent-ink);font-size:14px;flex:none}
-.hint{color:var(--muted);font-size:14px;margin:2px 0 12px}
-.row{display:flex;gap:16px;flex-wrap:wrap;align-items:flex-start}
-.row>*{min-width:0}
-.grow{flex:1 1 280px}
-label.f{display:block;font-size:14px;font-weight:600;margin:10px 0 4px}
-input[type=text],input[type=password],textarea,select{width:100%;font:inherit;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:9px 11px}
-textarea{min-height:96px;resize:vertical}
-input:focus,textarea:focus,select:focus{outline:2px solid var(--accent);outline-offset:1px}
-button.btn{font:inherit;font-weight:600;border:0;border-radius:9px;padding:10px 16px;background:var(--accent);color:var(--accent-ink);cursor:pointer}
-button.btn.sec{background:var(--soft);color:var(--ink);border:1px solid var(--line)}
-button.btn:disabled{opacity:.45;cursor:not-allowed}
-.btns{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
-.thumbs{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:10px}
-.thumb{border:2px solid var(--line);border-radius:10px;overflow:hidden;background:var(--soft);cursor:pointer;padding:0;font:inherit;color:inherit;text-align:left}
-.thumb img{display:block;width:100%;aspect-ratio:3/2;object-fit:cover;filter:grayscale(1)}
-.thumb span{display:block;font-size:13px;padding:5px 8px}
-.thumb.sel{border-color:var(--accent)}
-.upload{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:12px;font-size:14px}
-.modes{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:8px}
-.mode{border:2px solid var(--line);border-radius:10px;padding:10px 12px;cursor:pointer;background:var(--bg)}
-.mode input{margin-right:6px}
-.mode.sel{border-color:var(--accent)}
-.mode small{display:block;color:var(--muted);font-size:13px}
-.cap{height:12px;background:var(--soft);border-radius:6px;overflow:hidden;margin-top:6px}
-.cap>div{height:100%;background:var(--accent);width:0;transition:width .2s}
-.cap.over>div{background:var(--bad)}
-.captext{font-size:13px;color:var(--muted);margin-top:4px;font-variant-numeric:tabular-nums}
-.imgs{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;margin-top:12px}
-figure{margin:0}
-figure img{display:block;width:100%;height:auto;border-radius:8px;border:1px solid var(--line);image-rendering:auto;background:var(--soft)}
-figure img.px{image-rendering:pixelated}
-figcaption{font-size:13px;color:var(--muted);margin-top:4px}
-.stats{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px}
-.stat{background:var(--soft);border-radius:9px;padding:8px 12px;min-width:120px}
-.stat b{display:block;font:600 20px/1.2 var(--mono)}
-.stat span{font-size:12px;color:var(--muted)}
-.status{border-radius:10px;padding:12px 14px;margin-top:12px;border:1px solid transparent}
-.status .big{font:600 18px/1.3 var(--sans)}
-.status.ok{background:var(--ok-bg);color:var(--ok)}
-.status.damaged{background:var(--warn-bg);color:var(--warn)}
-.status.no_message{background:var(--none-bg);color:var(--none)}
-.status.err{background:var(--bad-bg);color:var(--bad)}
-.status .msg{margin-top:8px;padding:10px 12px;background:var(--panel);color:var(--ink);border-radius:8px;white-space:pre-wrap;word-break:break-word}
-.note{font-size:14px;background:var(--soft);border-left:4px solid var(--accent);padding:10px 12px;border-radius:0 8px 8px 0;margin-top:12px}
-.note.warn{border-color:var(--warn)}
+html,body{margin:0;height:100%}
+body{background:#EEF1F6;color:var(--ink);font:16px/1.6 var(--sans)}
+button,select,input,textarea{font:inherit;color:inherit}
+button{cursor:pointer}
+button:disabled{cursor:not-allowed;opacity:.45}
+a{color:var(--accent)}
 .mono{font-family:var(--mono)}
-.busy{position:fixed;inset:auto 16px 16px auto;background:var(--ink);color:var(--bg);padding:8px 14px;border-radius:20px;font-size:14px;display:none}
-.busy.on{display:block}
-.case{border:1px solid var(--line);border-radius:10px;padding:12px 14px;margin-bottom:10px;background:var(--bg)}
-.case h3{margin:0;font-size:16px}
-.case .id{font:600 13px var(--mono);color:var(--accent);margin-right:6px}
-.case p{margin:4px 0;font-size:14px}
-.case .exp{color:var(--ok)}
-.case .grid{display:grid;grid-template-columns:2fr auto 1.4fr auto;gap:8px;align-items:center;margin-top:8px}
-@media (max-width:720px){.case .grid{grid-template-columns:1fr}}
-.case.done{border-color:var(--ok)}
-.tag{display:inline-block;font-size:12px;padding:1px 8px;border-radius:10px;background:var(--soft);color:var(--muted)}
-.progress{display:flex;gap:12px;flex-wrap:wrap}
-table{border-collapse:collapse;width:100%;font-size:13px}
-th,td{border-bottom:1px solid var(--line);padding:6px 8px;text-align:left;vertical-align:top}
-.scroll{overflow-x:auto}
-details summary{cursor:pointer;font-weight:600}
 [hidden]{display:none!important}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+
+/* top bar */
+header.top{height:50px;display:flex;align-items:stretch;gap:24px;padding:0 16px;background:var(--paper);border-bottom:1px solid var(--line)}
+.brand{display:flex;align-items:center;gap:8px;font:600 15px var(--mono)}
+nav.tabs{display:flex;align-items:stretch;gap:4px;overflow-x:auto}
+nav.tabs button{border:0;background:none;padding:0 12px;color:var(--muted);border-bottom:2px solid transparent;white-space:nowrap}
+nav.tabs button[aria-selected=true]{color:var(--accent-dark);font-weight:600;border-bottom-color:var(--accent)}
+.host{margin-left:auto;display:flex;align-items:center;font-size:14px;color:var(--muted);white-space:nowrap}
+@media (max-width:760px){.host{display:none}}
+
+.intro{padding:10px 16px;background:var(--accent-bg);border-bottom:1px solid #D6E2FB}
+.intro b{color:var(--accent-dark)}
+
+/* tool layout: side panel | stage | side panel */
+.tool{display:flex;flex-wrap:wrap;min-height:calc(100vh - 50px - 46px)}
+.panel{flex:1 1 300px;max-width:340px;background:var(--paper);display:flex;flex-direction:column}
+.panel.left{border-right:1px solid var(--line)}
+.panel.right{border-left:1px solid var(--line)}
+.panel.wide{max-width:430px;flex-basis:380px}
+.panel h2{margin:0;padding:10px 14px;font-size:16px;font-weight:600;border-bottom:1px solid var(--line2);display:flex;align-items:center;gap:8px}
+.step{display:inline-grid;place-items:center;width:24px;height:24px;border-radius:50%;color:#fff;font:600 13px var(--mono);flex:none}
+.step.s1{background:var(--step1)}.step.s2{background:var(--step2)}.step.s3{background:var(--step3)}
+.panel .body{padding:14px;display:flex;flex-direction:column;gap:14px}
+.panel .body + h2{border-top:1px solid var(--line2)}
+.stage{flex:999 1 520px;min-width:0;display:flex;flex-direction:column;background:var(--stage)}
+@media (max-width:1100px){.panel,.panel.wide{max-width:none}}
+
+label.f{display:block;font-weight:600;margin-bottom:4px}
+.f small, .hint{font-weight:400;color:var(--muted);font-size:14px}
+.hint{margin:4px 0 0}
+input[type=text],textarea,select{width:100%;height:38px;padding:0 9px;border:1px solid var(--line);border-radius:4px;background:var(--paper)}
+textarea{height:84px;padding:8px 9px;resize:vertical}
+input.mono-in{font-family:var(--mono)}
+.row{display:flex;gap:6px}
+.row>*{min-width:0}
+.btn{height:40px;padding:0 14px;border:0;border-radius:6px;background:var(--accent);color:#fff;font-weight:600}
+.btn.sec{background:var(--paper);color:var(--ink);border:1px solid var(--line);font-weight:400}
+.btn.sm{height:32px;padding:0 11px;font-size:15px}
+a.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;text-decoration:none}
+a.btn[aria-disabled=true]{opacity:.45;pointer-events:none}
+.seg{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));border:1px solid var(--line);border-radius:4px;overflow:hidden}
+.seg button{height:36px;border:0;background:var(--paper);color:var(--ink2)}
+.seg button+button{border-left:1px solid var(--line)}
+.seg button[aria-pressed=true]{background:var(--accent);color:#fff;font-weight:600}
+.capbar{height:4px;background:var(--line2);margin-top:4px}
+.capbar>div{height:4px;width:0;background:var(--accent);transition:width .15s}
+.capbar.over>div{background:var(--bad)}
+select.attack-sel{border-color:#F5B58A;background:#FFF8F3}
+.check{display:flex;gap:8px;align-items:flex-start}
+.check input{margin-top:5px;width:16px;height:16px}
+
+/* stage */
+.canvas{flex:1;display:flex;align-items:center;justify-content:center;padding:28px;min-height:420px}
+.compare{position:relative;width:100%;max-width:760px;user-select:none;touch-action:none}
+.compare.side{max-width:1180px;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;touch-action:auto}
+.compare.side figure{margin:0}
+.compare.side figure img{display:block;width:100%;height:auto}
+.compare.side figure img.px{image-rendering:pixelated}
+.compare.side figcaption{margin-top:6px;color:#F4F4F5;font-size:15px}
+.compare.side figcaption b{font-weight:600}
+.compare.side figcaption .mono{color:#D4D4D8;font-size:14px}
+.compare.logos{max-width:1180px;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;touch-action:auto}
+.compare.logos figure{margin:0;animation:rise .3s ease-out both}
+.compare.logos figure:nth-child(2){animation-delay:.07s}.compare.logos figure:nth-child(3){animation-delay:.14s}
+.compare.logos img{display:block;width:100%;height:auto;aspect-ratio:1/1;image-rendering:pixelated;border:1px solid #52525B;background:#000}
+.compare.logos figcaption{margin-top:8px;color:#F4F4F5;font-size:15px;line-height:1.5}
+.compare.logos figcaption .score{display:block;font:600 15px var(--mono);color:#D4D4D8}
+.compare.logos figcaption .ev{display:inline-block;margin-top:4px;padding:1px 8px;border-radius:3px;font-weight:600;font-size:14px}
+.ev.yes{background:#15803D;color:#fff}.ev.no{background:#52525B;color:#fff}.ev.unsure{background:#B45309;color:#fff}
+.compare img{display:block;width:100%;height:auto}
+.compare img.over{position:absolute;inset:0;height:100%}
+.compare img.px{image-rendering:pixelated}
+.compare .line{position:absolute;top:0;bottom:0;width:2px;margin-left:-1px;background:#fff;box-shadow:0 0 0 1px rgba(0,0,0,.45);cursor:ew-resize}
+.compare .line::after{content:"";position:absolute;top:50%;left:50%;width:22px;height:22px;margin:-11px 0 0 -11px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.5)}
+.tag{position:absolute;top:8px;padding:2px 8px;background:rgba(0,0,0,.7);color:#fff;font-size:14px;border-radius:3px}
+.tag.l{left:8px}.tag.r{right:8px;font-family:var(--mono)}
+.empty{color:#D4D4D8;text-align:center;font-size:17px}
+.stagebar{flex:none;display:flex;flex-wrap:wrap;align-items:center;gap:10px 20px;padding:8px 16px;background:var(--stagebar);color:#F4F4F5;font-size:15px}
+.stagebar .views{display:flex;border:1px solid #52525B;border-radius:4px;overflow:hidden}
+.stagebar .views button{height:36px;padding:0 13px;border:0;background:transparent;color:#F4F4F5;font-size:15px}
+.stagebar .views button[aria-pressed=true]{background:#DBEAFE;color:#1E3A8A;font-weight:600}
+.stagebar .views button:disabled{opacity:.35}
+.stagebar .stats{margin-left:auto;font-family:var(--mono)}
+
+/* results */
+.result{border:1px solid var(--line);border-radius:4px;overflow:hidden}
+.result .head{display:flex;align-items:center;gap:8px;padding:8px 10px}
+.pill{font:600 14px var(--mono);padding:1px 7px;border-radius:3px;color:#fff;white-space:nowrap}
+.result.ok{border-color:var(--ok-line)} .result.ok .head{background:var(--ok-bg);color:#14532D} .result.ok .pill{background:var(--ok)}
+.result.damaged{border-color:var(--warn-line)} .result.damaged .head{background:var(--warn-bg);color:var(--warn)} .result.damaged .pill{background:#B45309}
+.result.no_message .head{background:var(--none-bg);color:var(--none)} .result.no_message .pill{background:#52525B}
+.result .msg{padding:10px;font-size:17px;white-space:pre-wrap;word-break:break-word}
+.result dl{margin:0;padding:8px 10px;border-top:1px solid var(--line2);display:grid;grid-template-columns:auto 1fr;gap:2px 12px;font:14px var(--mono);color:var(--muted)}
+.result dd{margin:0;color:var(--ink)}
+#w-result,#s-result{display:flex;flex-direction:column;gap:10px}
+.err{background:var(--bad-bg);color:var(--bad);border:1px solid #F0C4C4;border-radius:4px;padding:8px 10px}
+.note{background:var(--warn-bg);border:1px solid var(--warn-line);border-radius:4px;padding:8px 10px;font-size:15px}
+dl.legend{margin:0;display:grid;grid-template-columns:auto 1fr;gap:4px 10px;font-size:15px}
+dl.legend dt{font-family:var(--mono)}
+dl.legend dd{margin:0}
+
+/* watermark verify */
+.verdicts{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.verdict{border:2px solid var(--line);border-radius:4px;padding:8px 10px}
+.verdict .who{font-size:14px;color:var(--ink2)}
+.verdict .what{font-size:19px;font-weight:700}
+.verdict.yes{border-color:var(--ok);background:var(--ok-bg)} .verdict.yes .what{color:#14532D}
+.verdict.unsure{border-color:#D97706;background:var(--warn-bg)} .verdict.unsure .what{color:var(--warn)}
+table.cmp{width:100%;border-collapse:collapse;font-size:15px}
+table.cmp th,table.cmp td{padding:8px 4px;border-bottom:1px solid var(--line2);text-align:left;vertical-align:top}
+table.cmp th{font-weight:400;color:var(--ink2);font-size:14px}
+table.cmp td.num{font:600 17px var(--mono)}
+table.cmp td.num.ok{color:var(--ok)}
+table.cmp .sub{display:block;font-size:14px;color:var(--ink2)}
+table.cmp img{width:92px;height:92px;border:1px solid var(--line);image-rendering:pixelated;display:block}
+.alpha-table{width:100%;border-collapse:collapse;font:14px var(--mono);color:var(--muted);margin-top:4px}
+.alpha-table td{text-align:right;padding:0}
+.alpha-table td:first-child{text-align:left}
+.alpha-table .on{color:var(--ink);font-weight:600}
+
+
+.how{max-width:860px;margin:0 auto;padding:24px 16px 56px;background:var(--paper);min-height:calc(100vh - 50px)}
+.how h1{font-size:22px;margin:0 0 8px}
+.how h2{font-size:18px;margin:22px 0 6px}
+.how li{margin-bottom:6px}
+
+/* tests page: list on the left, one big case on the right */
+.tp{max-width:1400px;margin:0 auto;padding:20px 20px 48px;font-size:17px}
+.tp-head{display:flex;flex-wrap:wrap;align-items:flex-end;gap:12px 24px;margin-bottom:14px}
+.tp-head h1{margin:0;font-size:28px;font-weight:700}
+.tp-head p{margin:2px 0 0;color:var(--ink2);max-width:760px}
+.tp-actions{margin-left:auto;display:flex;flex-wrap:wrap;align-items:center;gap:8px}
+.tp-actions input{width:170px;height:40px}
+.tp-images{display:flex;flex-wrap:wrap;align-items:center;gap:10px 14px;padding:12px 14px;background:var(--paper);border:1px solid var(--line);border-radius:8px;margin-bottom:12px}
+.tp-label{font-weight:600}
+.tp-thumbs{display:flex;flex-wrap:wrap;gap:8px}
+.tp-thumbs button{padding:0;border:2px solid var(--line);border-radius:6px;overflow:hidden;background:#fff;width:84px;height:56px;position:relative}
+.tp-thumbs button img{width:100%;height:100%;object-fit:cover;filter:grayscale(1);display:block}
+.tp-thumbs button.def{width:auto;padding:0 12px;font-size:15px;color:var(--ink2)}
+.tp-thumbs button[aria-pressed=true]{border-color:var(--accent);box-shadow:0 0 0 3px #BFD3FB}
+.tp-thumbs button.def[aria-pressed=true]{background:var(--accent-bg);color:var(--accent-dark);font-weight:600}
+.tp-imgnote{font-size:15px;color:var(--ink2)}
+.tp-imgnote.warn{color:#9A3412}
+.tp-progress{display:flex;flex-wrap:wrap;align-items:center;gap:8px 20px;margin-bottom:12px;font-size:16px;color:var(--ink2)}
+.tp-progress .bar{flex:1 1 240px;height:8px;background:#DCE3EE;border-radius:99px;overflow:hidden;display:flex}
+.tp-progress .bar i{display:block;height:100%}
+.tp-progress .bar .p{background:var(--step3)}.tp-progress .bar .f{background:var(--bad)}
+.tp-body{display:flex;flex-wrap:wrap;gap:16px;align-items:flex-start}
+.tp-list{flex:1 1 300px;max-width:380px;background:var(--paper);border:1px solid var(--line);border-radius:8px;padding:8px}
+.tp-list h3{margin:10px 8px 4px;font-size:14px;font-weight:600;color:var(--muted);text-transform:none}
+.tp-list button{display:flex;align-items:center;gap:10px;width:100%;text-align:left;border:0;background:none;border-radius:6px;padding:9px 10px;font-size:16px;line-height:1.35}
+.tp-list button:hover{background:#F3F6FB}
+.tp-list button[aria-current=true]{background:var(--accent-bg);box-shadow:inset 3px 0 0 var(--accent)}
+.tp-list .cid{font:600 14px var(--mono);color:var(--accent-dark);width:34px;flex:none}
+.tp-list .ct{flex:1;min-width:0}
+.tp-list .st{flex:none;width:22px;height:22px;border-radius:50%;display:grid;place-items:center;font-size:13px;font-weight:700;color:#fff;border:1.5px solid #C4CBD6}
+.tp-list .st.pass{background:var(--step3);border-color:var(--step3)}.tp-list .st.fail{background:var(--bad);border-color:var(--bad)}
+.tp-list .st.auto{background:#fff;color:var(--step3);border-color:#9DD8B1}
+.tp-list .st.warn{background:#F59E0B;border-color:#F59E0B}
+.tp-detail{flex:999 1 640px;min-width:0;background:var(--paper);border:1px solid var(--line);border-radius:8px;padding:20px 22px;display:flex;flex-direction:column;gap:16px}
+.tp-detail .top{display:flex;flex-wrap:wrap;align-items:center;gap:10px 14px}
+.tp-detail .bid{font:600 16px var(--mono);color:#fff;background:var(--accent);border-radius:6px;padding:2px 10px}
+.tp-detail h2{margin:0;font-size:26px;line-height:1.3}
+.tp-detail .top .btn{margin-left:auto;height:46px;padding:0 24px;font-size:17px}
+.tp-chips{display:flex;flex-wrap:wrap;gap:8px}
+.tp-chips span{padding:4px 12px;border-radius:99px;background:#F1F4F9;border:1px solid #DCE3EE;font-size:16px}
+.tp-chips span.atk{background:#FFF4EC;border-color:#F5C3A0;color:#9A3412}
+.tp-expect{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px}
+.tp-box{border-radius:8px;padding:12px 14px;border:1px solid var(--line)}
+.tp-box .k{font-size:14px;font-weight:600;color:var(--muted);margin-bottom:2px}
+.tp-box.exp{background:#F8FAFD;border-style:dashed}
+.tp-box.got.pass{background:var(--ok-bg);border-color:var(--ok-line)}
+.tp-box.got.fail{background:var(--bad-bg);border-color:#F0C4C4}
+.tp-box.got.warn{background:var(--warn-bg);border-color:var(--warn-line)}
+.tp-box .why{font-size:15px;color:var(--warn);margin-top:4px}
+.auto.warn{color:#B45309;font-weight:600}
+.tp-chips span.off{text-decoration:line-through;color:var(--muted);background:#fff}
+.tp-box .v{font-size:18px}
+.tp-run{border-top:1px solid var(--line2);padding-top:14px;display:flex;flex-direction:column;gap:10px}
+.tp-run .rh{display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px;font-size:18px}
+.tp-run .rh b{font-size:18px}
+.tp-run .imgs{display:flex;flex-wrap:wrap;gap:12px;align-items:flex-start}
+.tp-run .imgs figure{flex:1 1 220px;max-width:calc(33.33% - 8px);min-width:200px}
+.tp-run figure{margin:0}
+.tp-run figure img{display:block;width:100%;height:auto;max-height:300px;object-fit:contain;background:#F1F4F9;border-radius:4px;border:1px solid var(--line)}
+.tp-run figure img.sq{aspect-ratio:1/1;width:auto;max-width:100%;image-rendering:pixelated;background:#000}
+.tp-run figcaption{font-size:15px;color:var(--ink2);margin-top:4px}
+.tp-run .meta{font:15px var(--mono);color:var(--muted)}
+.tp-run .msgline{font-size:19px}
+.tp-judge{display:flex;flex-wrap:wrap;align-items:center;gap:10px;border-top:1px solid var(--line2);padding-top:16px}
+.tp-judge .q{font-size:18px;font-weight:600;margin-right:4px}
+.tp-judge .btn{height:46px;padding:0 22px;font-size:17px}
+.tp-judge .btn.okb{background:#fff;color:#15803D;border:1.5px solid #86C79A}
+.tp-judge .btn.okb[aria-pressed=true]{background:#15803D;color:#fff;border-color:#15803D}
+.tp-judge .btn.nob{background:#fff;color:#B91C1C;border:1.5px solid #E5A3A3}
+.tp-judge .btn.nob[aria-pressed=true]{background:#B91C1C;color:#fff;border-color:#B91C1C}
+.tp-judge input{flex:1 1 200px;min-width:0;height:46px}
+.tp-judge .saved{color:var(--ok);font-weight:600}
+.tp-judge .next{margin-left:auto}
+.auto{font-size:16px;white-space:nowrap}.auto.pass{color:var(--ok);font-weight:600}.auto.fail{color:var(--bad);font-weight:600}
+.tp-empty{color:var(--muted);font-size:18px;padding:30px 0;text-align:center}
+
+/* zoom viewer: click any result image (or "ขยายดู") to inspect pixels; images in a group zoom and pan together */
+.compare.side figure img,.compare.logos img,.tp-run figure img{cursor:zoom-in}
+.zoombtn{display:inline-flex;align-items:center;gap:6px;height:36px;padding:0 12px;border:1px solid #52525B;border-radius:4px;background:transparent;color:#F4F4F5;font-size:15px}
+.zoombtn:hover{background:#3F3F46}
+.lb{position:fixed;inset:0;z-index:20;background:#0A0C12;display:flex;flex-direction:column;animation:fade .15s ease-out}
+.lb-bar{flex:none;display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px;padding:10px 16px;color:#F4F4F5;border-bottom:1px solid #2A2F3A}
+.lb-bar .t{font-weight:600;margin-right:auto}
+.lb-bar button{height:38px;min-width:38px;padding:0 12px;border:1px solid #52525B;border-radius:4px;background:#1F2430;color:#F4F4F5;font-size:16px}
+.lb-bar button:hover{background:#2A3140}
+.lb-bar .z{font:600 15px var(--mono);min-width:64px;text-align:center}
+.lb-bar .hint{font-size:14px;color:#A1A1AA}
+.lb-panes{flex:1;min-height:0;display:flex;gap:10px;padding:10px}
+.lb-pane{flex:1 1 0;min-width:0;position:relative;overflow:hidden;background:#0B0D12;border:1px solid #2A2F3A;border-radius:4px;cursor:grab;touch-action:none}
+.lb-pane.drag{cursor:grabbing}
+.lb-pane img{position:absolute;left:0;top:0;transform-origin:0 0;max-width:none;user-select:none;-webkit-user-drag:none}
+.lb-pane img.px{image-rendering:pixelated}
+.lb-pane .cap{position:absolute;left:8px;top:8px;padding:2px 8px;background:rgba(0,0,0,.7);color:#fff;font-size:14px;border-radius:3px;pointer-events:none}
+@media (max-width:760px){.lb-panes{flex-direction:column}}
+
+/* motion: press feedback, loading spinner on the clicked button, results fade in */
+.btn,.seg button,.views button,nav.tabs button,.judge button{transition:background-color .15s,color .15s,border-color .15s,box-shadow .15s,transform .08s ease-out}
+.btn:hover:not(:disabled){background:var(--accent-dark)}
+.btn.sec:hover:not(:disabled),label.btn.sec:hover{background:#F4F4F5;border-color:#A1A1AA}
+.seg button:hover:not([aria-pressed=true]){background:#F4F4F5}
+.stagebar .views button:hover:not([aria-pressed=true]):not(:disabled){background:#3F3F46}
+nav.tabs button:hover{color:var(--ink)}
+.btn:active:not(:disabled),.seg button:active,.views button:active:not(:disabled),label.btn:active{transform:scale(.96)}
+.btn.loading{position:relative;color:transparent!important;pointer-events:none}
+.btn.loading::after{content:"";position:absolute;left:50%;top:50%;width:16px;height:16px;margin:-8px 0 0 -8px;border-radius:50%;
+  border:2px solid currentColor;border-color:#fff #fff transparent transparent;animation:spin .7s linear infinite}
+.btn.sec.loading::after{border-color:var(--ink) var(--ink) transparent transparent}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes rise{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+@keyframes fade{from{opacity:0}to{opacity:1}}
+.result,.verdicts,.note,.err,.run,table.cmp,tr.detail .runs{animation:rise .28s ease-out}
+.compare.side figure{animation:rise .3s ease-out both}
+.compare.side figure+figure{animation-delay:.08s}
+.compare img.over{animation:fade .25s ease-out}
+.judge .saved{animation:fade .3s}
+@media (prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important}}
+
+.busy{position:fixed;right:16px;bottom:16px;background:var(--ink);color:#fff;padding:8px 14px;border-radius:4px;font-size:15px;display:none;z-index:9}
+.busy.on{display:block}
 </style>
 </head>
 <body>
-<header>
-  <h1>เดโม SVD: ซ่อนข้อความลับ และฝังลายน้ำในภาพ</h1>
-  <p>ทุกปุ่มเรียกโค้ดจริงของโปรเจกต์ (src/svdmark) · ทำงานบนเครื่องนี้ทั้งหมด รูปไม่ถูกส่งไปที่ไหน</p>
-  <nav role="tablist">
-    <button role="tab" data-tab="stego" aria-selected="true">① ซ่อนข้อความ</button>
-    <button role="tab" data-tab="wm" aria-selected="false">② ลายน้ำ</button>
-    <button role="tab" data-tab="tests" aria-selected="false">③ ทดสอบกับเพื่อน</button>
-    <button role="tab" data-tab="about" aria-selected="false">ทำงานยังไง</button>
+<header class="top">
+  <div class="brand">
+    <svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true"><rect x="1" y="1" width="16" height="16" fill="none" stroke="#18181B" stroke-width="1.5"/><rect x="5" y="5" width="4" height="4" fill="#2563EB"/><rect x="9" y="9" width="4" height="4" fill="#EA580C"/></svg>
+    svdmark
+  </div>
+  <nav class="tabs" role="tablist" aria-label="หน้า">
+    <button role="tab" data-page="stego" aria-selected="true">ซ่อนข้อความ</button>
+    <button role="tab" data-page="wm" aria-selected="false">Watermark</button>
+    <button role="tab" data-page="tests" aria-selected="false">ชุดทดสอบ</button>
+    <button role="tab" data-page="how" aria-selected="false">วิธีทำงาน</button>
   </nav>
+  <div class="host" id="host"></div>
 </header>
 
-<main>
-<!-- ============================================================ STEGO -->
-<section class="tab on" id="tab-stego">
-  <div class="card">
-    <h2><span class="step">1</span>เลือกรูป</h2>
-    <p class="hint">กดรูปตัวอย่าง หรืออัปโหลดรูปของคุณเอง (รูปจะถูกแปลงเป็นขาวดำ และถ้าใหญ่เกิน 640 พิกเซลจะถูกย่อ)</p>
-    <div class="thumbs" data-picker></div>
-    <div class="upload"><input type="file" accept="image/*" data-upload> <span class="hint" data-nosample hidden>ไม่พบรูปตัวอย่าง (ยังไม่ได้วางชุด BSDS500 ใน data/images) อัปโหลดรูปเองได้เลย</span></div>
-    <div class="note" data-covernote hidden></div>
-  </div>
+<!-- ======================================================================= STEGO -->
+<section id="page-stego">
+  <div class="intro"><b>ซ่อนข้อความลับไว้ในรูป</b> แล้วให้อีกคนอ่านกลับด้วย key เดียวกัน · อยากพิสูจน์ว่าเป็นเจ้าของรูป ไปที่แท็บ <a href="#" data-goto="wm">Watermark</a></div>
+  <div class="tool">
+    <aside class="panel left" aria-label="ผู้ส่ง">
+      <h2><span class="step s1">1</span>ผู้ส่ง</h2>
+      <div class="body">
+        <div>
+          <label class="f" for="s-src">รูป</label>
+          <div class="row">
+            <select id="s-src" data-src></select>
+            <label class="btn sec" style="display:inline-flex;align-items:center;flex:none">Upload<input type="file" accept="image/*" data-upload hidden></label>
+          </div>
+          <div class="hint mono" data-dims>—</div>
+          <div class="hint" data-notes></div>
+        </div>
+        <div>
+          <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:4px">
+            <label class="f" for="s-msg" style="margin:0">ข้อความ</label>
+            <span class="mono" style="font-size:14px;color:var(--muted)" id="s-count">0 / 0 bytes</span>
+          </div>
+          <textarea id="s-msg">นัดบ่ายสาม ตึก 12</textarea>
+          <div class="capbar" id="s-capbar"><div></div></div>
+          <div class="hint">อักษรไทย 3 bytes · อังกฤษ 1 byte · <a href="#" id="s-short">ข้อความสั้น</a> · <a href="#" id="s-long">ข้อความยาว</a></div>
+        </div>
+        <div>
+          <label class="f" for="s-key1">Key <small>(ไม่ใส่ก็ได้)</small></label>
+          <input type="text" id="s-key1" class="mono-in" value="kmitl" autocomplete="off">
+        </div>
+        <div>
+          <div class="f" id="s-mode-label">Mode</div>
+          <div class="seg" role="group" aria-labelledby="s-mode-label" id="s-modes">
+            <button type="button" data-mode="robust" aria-pressed="false">Robust</button>
+            <button type="button" data-mode="balanced" aria-pressed="true">Balanced</button>
+            <button type="button" data-mode="capacity" aria-pressed="false">Capacity</button>
+          </div>
+          <div class="hint" id="s-modedesc" style="color:var(--ink2)"></div>
+          <div class="hint mono" id="s-modeinfo"></div>
+        </div>
+        <label class="check"><input type="checkbox" id="s-ecc"><span>Hamming(7,4) ECC<span class="hint" style="display:block;margin:0">ช่วยซ่อมข้อความที่เสียเล็กน้อย แต่ซ่อนได้สั้นลง (เหลือ 4/7)</span></span></label>
+        <button class="btn" id="s-encode" disabled>Encode</button>
+        <a class="btn sec" id="s-download" download="stego.png" href="#" aria-disabled="true">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v11M7 10l5 5 5-5M5 20h14"/></svg>
+          ดาวน์โหลดรูปที่ซ่อนแล้ว (PNG)
+        </a>
+        <div class="err" id="s-err" hidden></div>
+      </div>
+    </aside>
 
-  <div class="card">
-    <h2><span class="step">2</span>ฝั่งผู้ส่ง: ซ่อนข้อความ</h2>
-    <p class="hint">ข้อความภาษาไทยใช้ 3 ไบต์ต่อตัวอักษร ภาษาอังกฤษ/ตัวเลข 1 ไบต์</p>
-    <div class="row">
-      <div class="grow">
-        <label class="f" for="msg">ข้อความลับ</label>
-        <textarea id="msg" placeholder="เช่น นัดบ่ายสาม ตึก 12"></textarea>
-        <div class="cap" id="capbar"><div></div></div>
-        <div class="captext" id="captext">เลือกรูปก่อน</div>
-        <div class="btns" style="margin-top:6px"><button class="btn sec" id="fillShort" type="button">ใส่ข้อความสั้นตัวอย่าง</button><button class="btn sec" id="fillLong" type="button">ใส่ข้อความยาวตัวอย่าง</button></div>
-        <label class="f" for="key1">รหัสลับ (ไม่ใส่ก็ได้)</label>
-        <input type="text" id="key1" placeholder="เช่น kmitl-2026 (ยิ่งยาวยิ่งเดายาก)" autocomplete="off">
-        <label class="f" style="display:flex;gap:8px;align-items:flex-start;font-weight:500"><input type="checkbox" id="ecc1" style="margin-top:6px"> <span><b>แก้บิตผิดอัตโนมัติ (Hamming 7,4)</b><br><span class="hint">เพิ่มบิตตรวจ 3 บิตต่อข้อมูลทุก 4 บิต แก้บิตผิดได้ 1 บิตในทุกกลุ่ม 7 บิต ทนการบีบอัดได้ดีขึ้น แต่จุได้น้อยลงเหลือ 4/7</span></span></label>
+    <section class="stage" aria-label="ภาพ">
+      <div class="canvas"><div class="empty" id="s-empty">กำลังโหลดรูป…</div><div class="compare" id="s-compare" hidden></div></div>
+      <div class="stagebar">
+        <div class="views" role="group" aria-label="ภาพด้านขวาของเส้นแบ่ง" id="s-views">
+          <button type="button" data-view="stego" aria-pressed="true" disabled>รูปที่ซ่อนแล้ว</button>
+          <button type="button" data-view="diff" aria-pressed="false" disabled>จุดที่ถูกแก้ ×20</button>
+          <button type="button" data-view="attacked" aria-pressed="false" disabled>หลัง attack</button>
+        </div>
+        <div class="views" role="group" aria-label="วิธีเทียบรูป" data-layout-for="s-compare">
+          <button type="button" data-layout="slider" aria-pressed="true">ลากเทียบ</button>
+          <button type="button" data-layout="side" aria-pressed="false">วางคู่กัน</button>
+        </div>
+        <button type="button" class="zoombtn" data-zoom="s-compare"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4M11 8v6M8 11h6"/></svg>ขยายดู</button>
+        <span class="stats" id="s-stats"></span>
       </div>
-      <div class="grow">
-        <label class="f">โหมด</label>
-        <div class="modes" id="modes"></div>
-        <p class="hint" style="margin-top:8px">ทุกโหมดคุณภาพภาพเท่ากัน (Δ = 4b → PSNR ≈ 40.8 dB เมื่อใช้เต็มความจุ) ต่างกันที่ความจุกับความทน</p>
-      </div>
-    </div>
-    <div class="btns"><button class="btn" id="doEmbed" disabled>ซ่อนข้อความ</button></div>
-    <div id="embedOut" hidden>
-      <div class="imgs">
-        <figure><img id="imgCover" alt="รูปต้นฉบับ"><figcaption>ต้นฉบับ</figcaption></figure>
-        <figure><img id="imgStego" alt="รูปที่ซ่อนข้อความแล้ว"><figcaption>ซ่อนข้อความแล้ว · <a id="dl" download="stego.png">ดาวน์โหลด PNG</a></figcaption></figure>
-        <figure><img id="imgDiff" class="px" alt="ส่วนต่างขยาย 20 เท่า"><figcaption>ส่วนต่าง × 20 (จุดสว่าง = พิกเซลที่ถูกเปลี่ยน) · บิตถูกเรียงใส่บล็อกจากซ้ายบนไปขวา ข้อความสั้นจึงเปลี่ยนแค่แถวบนๆ</figcaption></figure>
-      </div>
-      <div class="stats" id="embedStats"></div>
-      <div class="note warn">ส่งรูปให้เพื่อนเป็นไฟล์ <b>PNG</b> เท่านั้น ถ้าส่งผ่าน LINE / Facebook / ถ่ายหน้าจอ รูปจะถูกบีบอัดเป็น JPEG และข้อความอาจเสีย (ลองดูในขั้นที่ 4)</div>
-    </div>
-    <div class="status err" id="embedErr" hidden></div>
-  </div>
+    </section>
 
-  <div class="card">
-    <h2><span class="step">3</span>ฝั่งผู้รับ: อ่านข้อความ</h2>
-    <p class="hint">ผู้รับต้องรู้ "รหัสลับ" และ "โหมด" เดียวกับผู้ส่ง</p>
-    <div class="row">
-      <div class="grow">
-        <label class="f">รูปที่ได้รับ</label>
-        <div class="btns" style="margin-top:0"><button class="btn sec" id="useStego" disabled>ใช้รูปที่เพิ่งซ่อน</button><button class="btn sec" id="useCover" disabled>ใช้รูปต้นฉบับ (ไม่เคยซ่อน)</button></div>
-        <div class="upload"><input type="file" accept="image/*" id="recvUpload"></div>
-        <figure style="max-width:260px;margin-top:8px" id="recvFig" hidden><img id="recvImg" alt="รูปที่จะอ่าน"><figcaption id="recvCap"></figcaption></figure>
+    <aside class="panel right" aria-label="ระหว่างทางและผู้รับ">
+      <h2><span class="step s2">2</span>ระหว่างทาง</h2>
+      <div class="body">
+        <div>
+          <label class="f" for="s-attack">จำลองความเสียหายระหว่างส่ง (attack)</label>
+          <select id="s-attack" class="mono-in attack-sel" data-attacks></select>
+          <p class="hint" style="color:var(--ink2)">ส่งเป็น "รูปภาพ" ใน LINE / Facebook รูปจะถูกบีบอัด (ประมาณ JPEG Q90): Robust และ Balanced มักรอด · Capacity เสียง่ายกว่า · ส่งเป็น "ไฟล์" PNG รอดแน่นอน</p>
+        </div>
       </div>
-      <div class="grow">
-        <label class="f" for="key2">รหัสลับ</label>
-        <input type="text" id="key2" autocomplete="off">
-        <label class="f" for="mode2">โหมด</label>
-        <select id="mode2"></select>
-        <label class="f" style="display:flex;gap:8px;align-items:center;font-weight:500"><input type="checkbox" id="ecc2"> ข้อความถูกซ่อนแบบแก้บิตผิด (Hamming 7,4)</label>
+      <h2><span class="step s3">3</span>ผู้รับ</h2>
+      <div class="body">
+        <div>
+          <label class="f" for="s-key2">Key ของผู้รับ</label>
+          <input type="text" id="s-key2" class="mono-in" value="kmitl" autocomplete="off">
+          <p class="hint">Mode ใช้ตามผู้ส่ง (<span id="s-mode2">Balanced</span>) · ลองพิมพ์ key ผิดสักตัวดู</p>
+        </div>
+        <button class="btn" id="s-decode" disabled>Decode รูปที่เพิ่งซ่อน</button>
+        <label class="btn sec" style="display:inline-flex;align-items:center;justify-content:center">อัปโหลดรูปที่ได้รับมา แล้ว Decode<input type="file" accept="image/*" id="s-recv" hidden></label>
+        <button class="btn sec" id="s-decode-cover" disabled>ลองอ่านจากรูปที่ไม่เคยซ่อน</button>
+        <div id="s-result"></div>
+        <div>
+          <div style="font-weight:600;margin-bottom:4px">ผลที่เป็นไปได้</div>
+          <dl class="legend">
+            <dt>ok</dt><dd>ได้ข้อความเดิมครบ</dd>
+            <dt>damaged</dt><dd>เจอข้อความ แต่ CRC ไม่ผ่าน (บิตเสีย)</dd>
+            <dt>no_message</dt><dd>ไม่มีข้อความ หรือ key ไม่ตรง (key ผิดแม้ตัวเดียว ตำแหน่งที่อ่านจะผิดทั้งหมด)</dd>
+          </dl>
+        </div>
       </div>
-    </div>
-    <div class="btns"><button class="btn" id="doExtract" disabled>อ่านข้อความ</button></div>
-    <div id="extractOut"></div>
-  </div>
-
-  <div class="card">
-    <h2><span class="step">4</span>ลองโจมตีดู: ข้อความรอดไหม?</h2>
-    <p class="hint">เอารูปที่ซ่อนในขั้นที่ 2 มาทำให้เสียหาย แล้วอ่านด้วยรหัสและโหมดเดิม ระบบนับให้ด้วยว่าบิตของข้อความผิดกี่บิต</p>
-    <div class="row">
-      <div class="grow"><label class="f" for="att1">การโจมตี</label><select id="att1"></select></div>
-    </div>
-    <div class="btns"><button class="btn" id="doAttack" disabled>โจมตีแล้วอ่าน</button></div>
-    <div id="attackOut"></div>
+    </aside>
   </div>
 </section>
 
-<!-- ============================================================ WATERMARK -->
-<section class="tab" id="tab-wm">
-  <div class="card">
-    <h2><span class="step">1</span>เลือกรูป</h2>
-    <p class="hint">ใช้รูปเดียวกับแท็บซ่อนข้อความได้</p>
-    <div class="thumbs" data-picker></div>
-    <div class="upload"><input type="file" accept="image/*" data-upload></div>
-    <div class="note" data-covernote hidden></div>
-  </div>
-  <div class="card">
-    <h2><span class="step">2</span>ฝังลายน้ำ (วิธีของ Liu &amp; Tan, 2002)</h2>
-    <p class="hint">ลายน้ำคือภาพขาวดำขนาดเท่าด้านสั้นของรูป (เช่น 320×320) บวกเข้าไปในค่า σ ของทั้งรูป</p>
-    <div class="row">
-      <div class="grow">
-        <label class="f" for="logoText">โลโก้ (ตัวอังกฤษ / ตัวเลข ไม่เกิน 8 ตัว)</label>
-        <input type="text" id="logoText" value="LA2026" maxlength="8">
-        <div class="upload">หรืออัปโหลดรูปโลโก้: <input type="file" accept="image/*" id="logoUpload"></div>
+<!-- ======================================================================= WATERMARK -->
+<section id="page-wm" hidden>
+  <div class="intro"><b>ฝังโลโก้ลงในรูปแบบมองไม่เห็น</b> แล้วตรวจภายหลังว่ารูปไหนเป็นของเรา</div>
+  <div class="tool">
+    <aside class="panel left" aria-label="ฝัง watermark">
+      <h2><span class="step s1">1</span>ฝัง watermark</h2>
+      <div class="body">
+        <div>
+          <label class="f" for="w-src">รูป</label>
+          <div class="row">
+            <select id="w-src" data-src></select>
+            <label class="btn sec" style="display:inline-flex;align-items:center;flex:none">Upload<input type="file" accept="image/*" data-upload hidden></label>
+          </div>
+          <div class="hint mono" data-dims>—</div>
+          <div class="hint" data-notes></div>
+        </div>
+        <div style="display:flex;gap:10px;align-items:flex-end">
+          <div style="flex:1;min-width:0">
+            <label class="f" for="w-logo">Logo <small>(A–Z, 0–9, ไม่เกิน 8 ตัว)</small></label>
+            <input type="text" id="w-logo" class="mono-in" value="LA2026" maxlength="8" autocomplete="off">
+          </div>
+          <img id="w-logo-img" alt="Logo ที่จะฝัง" width="58" height="58" style="border:1px solid var(--line);image-rendering:pixelated;background:#000" hidden>
+        </div>
+        <div>
+          <div style="display:flex;justify-content:space-between;align-items:baseline">
+            <label class="f" for="w-alpha" style="margin:0">α (ความแรง)</label>
+            <span class="mono" style="font-weight:600" id="w-alpha-v">16</span>
+          </div>
+          <input type="range" id="w-alpha" min="2" max="32" step="1" value="16" style="width:100%;accent-color:#18181B">
+          <table class="alpha-table" aria-label="PSNR เฉลี่ยจากการทดลอง">
+            <tr><td>α</td><td data-a="8">8</td><td data-a="12">12</td><td data-a="16">16</td><td data-a="24">24</td></tr>
+            <tr><td>PSNR</td><td data-a="8">49.3</td><td data-a="12">44.1</td><td data-a="16">40.3</td><td data-a="24">34.9</td></tr>
+          </table>
+          <p class="hint">PSNR เฉลี่ย 400 รูป (dB) · 40 dB ขึ้นไป ตาแยกไม่ออก</p>
+        </div>
+        <button class="btn" id="w-embed" disabled>Embed</button>
+        <a class="btn sec" id="w-download" download="watermarked.png" href="#" aria-disabled="true">ดาวน์โหลดรูปที่ฝังแล้ว (PNG)</a>
+        <p class="hint">ระบบจำข้อมูลที่ใช้ตรวจ (key) ไว้ให้ จนกว่าจะปิดโปรแกรม</p>
+        <div class="err" id="w-err" hidden></div>
       </div>
-      <div class="grow">
-        <label class="f" for="alpha">ความแรง α = <span id="alphaV" class="mono">16</span></label>
-        <input type="range" id="alpha" min="2" max="32" step="1" value="16" style="width:100%">
-        <p class="hint">α มาก = ลายน้ำทนกว่า แต่ภาพเสียมากขึ้น · ผลทดลองของเรา: α = 16 ยังได้ PSNR ≥ 40 dB กับโลโก้แบบนี้</p>
+    </aside>
+
+    <section class="stage" aria-label="ภาพ">
+      <div class="canvas"><div class="empty" id="w-empty">กำลังโหลดรูป…</div><div class="compare" id="w-compare" hidden></div></div>
+      <div class="stagebar">
+        <div class="views" role="group" aria-label="ภาพที่จะดู" id="w-views">
+          <button type="button" data-view="marked" aria-pressed="true" disabled>รูปที่ฝังแล้ว</button>
+          <button type="button" data-view="diff" aria-pressed="false" disabled>จุดที่ถูกแก้ ×20</button>
+          <button type="button" data-view="attacked" aria-pressed="false" disabled>หลัง attack</button>
+          <button type="button" data-view="logos" aria-pressed="false" disabled>เทียบโลโก้</button>
+        </div>
+        <div class="views" role="group" aria-label="วิธีเทียบรูป" data-layout-for="w-compare">
+          <button type="button" data-layout="slider" aria-pressed="true">ลากเทียบ</button>
+          <button type="button" data-layout="side" aria-pressed="false">วางคู่กัน</button>
+        </div>
+        <button type="button" class="zoombtn" data-zoom="w-compare"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4M11 8v6M8 11h6"/></svg>ขยายดู</button>
+        <span class="stats" id="w-stats"></span>
       </div>
-    </div>
-    <div class="btns"><button class="btn" id="doWm" disabled>ฝังลายน้ำ</button></div>
-    <div id="wmOut" hidden>
-      <div class="imgs">
-        <figure><img id="wmCover" alt="ต้นฉบับ"><figcaption>ต้นฉบับ</figcaption></figure>
-        <figure><img id="wmMarked" alt="ฝังลายน้ำแล้ว"><figcaption>ฝังลายน้ำแล้ว · <a id="wmDl" download="watermarked.png">ดาวน์โหลด PNG</a></figcaption></figure>
-        <figure><img id="wmLogo" class="px" alt="ลายน้ำที่ใช้"><figcaption>ลายน้ำ W ที่ฝัง</figcaption></figure>
+    </section>
+
+    <aside class="panel right wide" aria-label="ตรวจ watermark">
+      <h2><span class="step s3">2</span>ตรวจว่ารูปไหนมี watermark</h2>
+      <div class="body">
+        <div>
+          <label class="f" for="w-attack">จำลองความเสียหายก่อนตรวจ (attack)</label>
+          <select id="w-attack" class="mono-in attack-sel" data-attacks></select>
+          <p class="hint">ทำกับทั้งสองรูปเหมือนกัน แล้วตรวจ</p>
+        </div>
+        <button class="btn" id="w-check" disabled>ตรวจทั้งสองรูป</button>
+        <div id="w-result"></div>
       </div>
-      <div class="stats" id="wmStats"></div>
-    </div>
-    <div class="status err" id="wmErr" hidden></div>
-  </div>
-  <div class="card">
-    <h2><span class="step">3</span>ถอดลายน้ำ และตรวจว่าเชื่อได้ไหม</h2>
-    <p class="hint">การถอดต้องใช้ "key" ที่เก็บไว้ตอนฝัง (U, V, S, Uw, Vw, α) แอปจำ key ไว้ให้จนกว่าจะปิดแอป</p>
-    <div class="btns">
-      <button class="btn" id="exMarked" disabled>ถอดจากรูปที่ฝัง</button>
-      <button class="btn sec" id="exCover" disabled>ถอดจากรูปต้นฉบับ (ไม่เคยฝัง)</button>
-    </div>
-    <div class="row" style="margin-top:8px">
-      <div class="grow"><label class="f" for="att2">หรือโจมตีรูปที่ฝังก่อน แล้วถอด</label><select id="att2"></select></div>
-    </div>
-    <div class="btns"><button class="btn sec" id="exAttacked" disabled>โจมตีรูปที่ฝัง แล้วถอด</button><button class="btn sec" id="exCoverAtt" disabled>โจมตีรูปต้นฉบับ แล้วถอด</button></div>
-    <div id="wmExOut"></div>
-    <details style="margin-top:14px"><summary>ทำไมรูปที่ไม่เคยฝังก็ถอดโลโก้ออกมาได้?</summary>
-      <p class="hint" style="margin-top:8px">ตอนฝัง เราคำนวณ SVD ของ D = Σ + αW ได้ Uw, Σw, Vw แล้วเก็บ Uw, Vw ไว้ใน key ส่วนของ W ที่อยู่ <b>นอกเส้นทแยง</b> ถูกเก็บเป็น "มุมเอียงเล็กๆ" ของ Uw, Vw ซึ่งอยู่ใน key ไม่ใช่ในรูป มีแค่ส่วน <b>บนเส้นทแยง</b> (320 จาก 102,400 ช่อง) ที่ไปเปลี่ยนค่า σ ของรูปจริงๆ ดังนั้นใครถือ key ก็ถอดโลโก้ได้เกือบทั้งหมดจากรูปไหนก็ได้ที่ σ ใกล้กับต้นฉบับ สังเกต <b>เส้นทแยงมืด</b> ในโลโก้ที่ถอดจากต้นฉบับ: นั่นคือส่วนที่หายไปเพราะ σ ไม่ได้ขยับจริง</p>
-      <p class="hint">เราจึงเสนอ <b>shift score</b> = cos(σ ของรูปที่ตรวจ − S, Sw − S) ถามว่า "σ ของรูปนี้ขยับไปทางเดียวกับที่การฝังทำหรือเปล่า" รูปที่ฝังจริงได้ ≈ 1 รูปต้นฉบับได้ 0 เกณฑ์ 0.8 / 0.3 ที่แอปใช้เป็นค่าคร่าวๆ จากผลทดลอง ไม่ใช่ค่ามาตรฐาน</p>
-    </details>
+    </aside>
   </div>
 </section>
 
-<!-- ============================================================ TESTS -->
-<section class="tab" id="tab-tests">
-  <div class="card">
-    <h2>บันทึกการทดสอบกับเพื่อน</h2>
-    <p class="hint">ให้เพื่อนลองตามแต่ละกรณี แล้วบันทึกสิ่งที่เห็น ผลถูกเก็บในไฟล์ <span class="mono">demo/demo_log.csv</span> (เปิดด้วย Excel ได้) เป้าหมาย: เพื่อนอย่างน้อย 2 คน ลองอย่างน้อย 10 กรณี</p>
-    <label class="f" for="tester">ชื่อผู้ทดสอบ</label>
-    <input type="text" id="tester" placeholder="เช่น ต้น (ปี 2)" style="max-width:320px">
-    <div class="progress stats" id="progress"></div>
-  </div>
-  <div id="caseList"></div>
-  <div class="card">
-    <h2>ผลที่บันทึกล่าสุด</h2>
-    <div class="scroll"><table id="logTbl"></table></div>
+<!-- ======================================================================= TESTS -->
+<section id="page-tests" hidden>
+  <div class="tp">
+    <div class="tp-head">
+      <div>
+        <h1>ชุดทดสอบ</h1>
+        <p>20 กรณีที่ตั้งค่าไว้แล้ว เลือกกรณีทางซ้าย กด <b>Run</b> ระบบจะซ่อน → attack → อ่านกลับ และเช็คกับผลที่คาดให้ แล้วคนที่ดูผลกดยืนยัน</p>
+      </div>
+      <div class="tp-actions">
+        <label for="t-name">ชื่อผู้ลอง</label>
+        <input type="text" id="t-name" placeholder="ไม่ใส่ก็ได้" autocomplete="off">
+        <a class="btn sec" href="/api/log.csv" download="demo_log.csv">Export CSV</a>
+        <button class="btn" id="t-runall">Run all</button>
+      </div>
+    </div>
+
+    <div class="tp-images">
+      <span class="tp-label">รูปที่ใช้ทดสอบ</span>
+      <div class="tp-thumbs" id="t-thumbs"></div>
+      <label class="btn sec" style="display:inline-flex;align-items:center">Upload<input type="file" accept="image/*" id="t-upload" hidden></label>
+      <span class="tp-imgnote" id="t-imgnote">ใช้รูปที่ตั้งไว้ในแต่ละกรณี</span>
+    </div>
+
+    <div class="tp-progress" id="t-sum"></div>
+
+    <div class="tp-body">
+      <nav class="tp-list" id="t-list" aria-label="รายการกรณีทดสอบ"></nav>
+      <section class="tp-detail" id="t-detail" aria-live="polite"></section>
+    </div>
   </div>
 </section>
 
-<!-- ============================================================ ABOUT -->
-<section class="tab" id="tab-about">
-  <div class="card">
-    <h2>ซ่อนข้อความทำงานยังไง (สรุปสั้น)</h2>
+<!-- ======================================================================= HOW -->
+<section id="page-how" hidden>
+  <article class="how">
+    <h1>วิธีทำงาน</h1>
+    <p>ทุกปุ่มในแอปเรียกโค้ดจริงของโปรเจกต์ (<span class="mono">src/svdmark</span>) และทำงานบนเครื่องนี้ทั้งหมด รูปไม่ถูกส่งไปไหน</p>
+    <h2>ซ่อนข้อความ (QIM บน σ₁ ของแต่ละบล็อก)</h2>
     <ol>
-      <li>แบ่งรูปเป็นบล็อก b×b (เช่น 8×8) แต่ละบล็อกซ่อนได้ 1 บิต</li>
-      <li>ทำ SVD ของบล็อก A = UΣVᵀ แล้วดู σ₁ (ค่า singular value ตัวใหญ่สุด ≈ b × ความสว่างเฉลี่ยของบล็อก)</li>
-      <li>แบ่งแกน σ เป็นช่วงกว้าง Δ ช่วงเลขคู่ = บิต 0 ช่วงเลขคี่ = บิต 1 แล้วย้าย σ₁ ไปกลางช่วงที่ตรงกับบิตที่ต้องการ</li>
-      <li>สร้างบล็อกกลับ ปัดเป็นจำนวนเต็ม 0–255 แล้ว <b>อ่านซ้ำทันที</b> (closed-loop) ต้องอ่านได้บิตถูกและอยู่ห่างขอบช่วงอย่างน้อย Δ/4 ไม่งั้นลองช่วงถัดไป</li>
-      <li>ข้อความถูกแปลงเป็นบิต: ความยาว 16 บิต + CRC 16 บิต + เนื้อความ (UTF-8) ผู้รับใช้ CRC ตรวจว่าข้อความครบถูกต้อง</li>
-      <li>รหัสลับ (ถ้าใส่) เลื่อนเส้นแบ่งช่วงของแต่ละบล็อกไปคนละระยะแบบสุ่ม คนที่ไม่มีรหัสจึงอ่านไม่ได้ ระยะเลื่อนสร้างจากรหัสผ่าน PBKDF2-HMAC-SHA256 (200,000 รอบ) ทำให้การเดารหัสแต่ละครั้งช้า (ราว 0.07 วินาที) รุ่นแรกใช้ CRC32 ซึ่งมีแค่ 2³² แบบ ลองครบได้ในราว 1 วัน · ไม่ใช่การเข้ารหัส และรหัสสั้นหรือเป็นคำทั่วไปยังเดาได้</li>
-      <li>แก้บิตผิดอัตโนมัติ (ถ้าเปิด) ใช้รหัส Hamming(7,4): ข้อมูล 4 บิต d คูณเมทริกซ์ G (mod 2) ได้ 7 บิต ผู้รับคำนวณ s = H·r (mod 2) ถ้า s ไม่เป็นศูนย์ s จะตรงกับคอลัมน์หนึ่งของ H ซึ่งบอกตำแหน่งบิตที่ผิด แล้วพลิกกลับ</li>
+      <li>แปลงรูปเป็นภาพเทา แล้วแบ่งเป็นบล็อก b×b (Balanced = 8×8) แต่ละบล็อกเก็บได้ 1 บิต</li>
+      <li>ทำ SVD ของบล็อก A = UΣVᵀ แล้วดูค่า σ₁ (singular value ตัวใหญ่สุด ≈ b × ความสว่างเฉลี่ยของบล็อก)</li>
+      <li>แบ่งแกน σ เป็นช่องกว้าง Δ ช่องเลขคู่ = บิต 0 ช่องเลขคี่ = บิต 1 แล้วย้าย σ₁ ไปกลางช่องที่ตรงกับบิตที่ต้องการ σ₁ จึงเพี้ยนได้ ±Δ/2 โดยยังอ่านบิตเดิมได้</li>
+      <li>สร้างบล็อกกลับ ปัดเป็นจำนวนเต็ม 0–255 แล้วอ่านซ้ำทันที (closed-loop) ต้องได้บิตถูกและห่างขอบช่องอย่างน้อย Δ/4</li>
+      <li>ข้อความเก็บเป็น 16 บิตความยาว + CRC-16 + เนื้อความ UTF-8 ผู้รับใช้ CRC ตรวจว่าข้อความครบ (ok / damaged / no_message)</li>
+      <li>Key (ถ้าใส่) ผ่าน PBKDF2-HMAC-SHA256 แล้วเลื่อนเส้นแบ่งช่องของแต่ละบล็อกไปคนละระยะ คนที่ไม่มี key จึงอ่านไม่ได้</li>
+      <li>Hamming(7,4) ECC (ถ้าเปิด) คูณข้อมูล 4 บิตด้วยเมทริกซ์ G (mod 2) ได้ 7 บิต ผู้รับคำนวณ syndrome s = Hr แล้วแก้บิตผิดได้ 1 บิตต่อกลุ่ม</li>
     </ol>
-    <h2 style="margin-top:14px">ข้อจำกัดที่วัดได้จริง</h2>
+    <h2>Watermark (Liu &amp; Tan, 2002)</h2>
+    <ol>
+      <li>SVD ของทั้งรูป A = UΣVᵀ แล้วบวกโลโก้ W เข้าไป: D = Σ + αW</li>
+      <li>SVD ของ D = U<sub>w</sub>Σ<sub>w</sub>V<sub>w</sub>ᵀ แล้วสร้างรูปใหม่ A<sub>w</sub> = UΣ<sub>w</sub>Vᵀ</li>
+      <li>ตอนตรวจ หา Σ* ของรูปที่ได้รับ แล้วดึงโลโก้ W* = (U<sub>w</sub>Σ*V<sub>w</sub>ᵀ − Σ)/α และวัด NCC กับโลโก้จริง</li>
+      <li>ปัญหา: key (U<sub>w</sub>, V<sub>w</sub>) จำหน้าตาโลโก้ไว้เกือบทั้งหมด รูปที่ไม่เคยฝังก็ได้ NCC สูง เราจึงเพิ่ม <b>shift score</b> = cos(σ* − σ, σ<sub>w</sub> − σ) ซึ่งเป็น 0 สำหรับรูปที่ไม่เคยฝัง</li>
+    </ol>
+    <h2>ข้อจำกัดที่วัดได้จริง</h2>
     <ul>
-      <li>ตัวตรวจจับที่ฝึกด้วย machine learning ง่ายๆ จับรูปที่ซ่อนข้อความเต็มความจุได้ AUC ≈ 0.99 แม้ใส่รหัสลับ เพราะการเปลี่ยน σ₁ = บวก d·u₁v₁ᵀ ซึ่งเกือบเป็นการเลื่อนความสว่างทั้งบล็อกเท่ากัน จึงเกิด "ขั้น" เล็กๆ ที่ขอบบล็อก (ข้อความสั้น AUC ≈ 0.79)</li>
-      <li>หมุนรูปเพียง 0.5° ข้อความหายทุกโหมด เพราะตารางบล็อกเลื่อน ส่วนลายน้ำทนการหมุนเล็กน้อยได้ แต่ไม่ทนการเบลอ</li>
+      <li>Machine learning detector อย่างง่ายจับรูปที่ซ่อนข้อความเต็มความจุได้ (AUC ≈ 0.99) แม้ใส่ key เพราะเกิดรอยที่ขอบบล็อก</li>
+      <li>Rotate 0.5° ทำให้ข้อความหายทุก mode เพราะตารางบล็อกเลื่อน ส่วน watermark ทนการหมุนเล็กน้อยได้</li>
+      <li>Blur ทำให้ shift score ติดลบทั้งรูปที่ฝังและไม่เคยฝัง เกณฑ์ 0.8 / 0.3 ในแอปจึงใช้ตัดสินไม่ได้หลังเบลอ</li>
     </ul>
-    <p class="hint">รายละเอียดและตัวเลขทั้งหมดอยู่ใน results/findings.md</p>
-  </div>
+    <p class="hint">ตัวเลขทั้งหมดอยู่ใน results/findings.md</p>
+  </article>
 </section>
-</main>
-<div class="busy" id="busy">กำลังคำนวณ…</div>
+
+<div class="lb" id="lb" role="dialog" aria-modal="true" aria-label="ขยายดูรูป" hidden>
+  <div class="lb-bar">
+    <span class="t" id="lb-title">ขยายดูรูป</span>
+    <span class="hint">scroll = ซูม · ลาก = เลื่อน · ดับเบิลคลิก = ซูมเข้า</span>
+    <button type="button" data-z="out" aria-label="ซูมออก">−</button>
+    <span class="z" id="lb-z">100%</span>
+    <button type="button" data-z="in" aria-label="ซูมเข้า">+</button>
+    <button type="button" data-z="fit">พอดีจอ</button>
+    <button type="button" data-z="one">1:1</button>
+    <button type="button" data-z="close" aria-label="ปิด">✕ ปิด</button>
+  </div>
+  <div class="lb-panes" id="lb-panes"></div>
+</div>
+<div class="busy" id="busy" role="status">กำลังคำนวณ…</div>
 
 <script>
-const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
-const S={info:null, cover:null, coverInfo:null, mode:'balanced', stego:null, sent:null, recv:null, recvLabel:'', wm:null};
-const ATTACKS=[['jpeg',95,'บันทึกเป็น JPEG คุณภาพ 95'],['jpeg',90,'บันทึกเป็น JPEG คุณภาพ 90'],['jpeg',75,'บันทึกเป็น JPEG คุณภาพ 75'],['jpeg',60,'บันทึกเป็น JPEG คุณภาพ 60'],['jpeg',50,'บันทึกเป็น JPEG คุณภาพ 50'],
-  ['noise',1,'สัญญาณรบกวน σ = 1'],['noise',2,'สัญญาณรบกวน σ = 2'],['noise',4,'สัญญาณรบกวน σ = 4'],['noise',8,'สัญญาณรบกวน σ = 8'],
-  ['crop',0.05,'เจาะกลางภาพ 5%'],['crop',0.1,'เจาะกลางภาพ 10%'],['crop',0.25,'เจาะกลางภาพ 25%'],
-  ['resize',0.75,'ย่อเหลือ 75% แล้วขยายกลับ'],['resize',0.5,'ย่อเหลือ 50% แล้วขยายกลับ'],['blur',0.5,'เบลอเล็กน้อย (รัศมี 0.5)'],['blur',1.0,'เบลอ (รัศมี 1)'],
-  ['median',3,'median filter 3×3 (ลบจุดรบกวน)'],['rotate',0.5,'หมุน 0.5°'],['rotate',1.0,'หมุน 1°']];
-const STATUS_LABEL={ok:'✅ ok — อ่านได้ถูกต้อง',no_message:'⚪ no_message — ไม่พบข้อความ',damaged:'⚠️ damaged — ข้อความเสียหาย'};
-const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const $ = s => document.querySelector(s), $$ = s => [...document.querySelectorAll(s)];
+const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const SHORT = 'นัดบ่ายสาม ตึก 12';
+const LONG = 'ข้อความนี้ยาวเกือบเต็มความจุของรูปในโหมดสมดุลเพื่อทดสอบว่าระบบยังซ่อนและอ่านกลับได้ครบทุกตัวอักษร';
+const ATTACKS = [
+  ['none', null, 'none — ส่งเป็นไฟล์ PNG'],
+  ['jpeg', 95, 'JPEG Q95'], ['jpeg', 90, 'JPEG Q90 — ประมาณส่งผ่าน LINE'], ['jpeg', 75, 'JPEG Q75'], ['jpeg', 50, 'JPEG Q50'],
+  ['noise', 2, 'Gaussian noise σ=2'], ['noise', 4, 'Gaussian noise σ=4'], ['noise', 8, 'Gaussian noise σ=8'],
+  ['crop', 0.1, 'Crop center 10%'], ['crop', 0.25, 'Crop center 25%'],
+  ['resize', 0.75, 'Resize 75% → 100%'], ['resize', 0.5, 'Resize 50% → 100%'],
+  ['blur', 0.5, 'Blur r=0.5'], ['blur', 1.0, 'Blur r=1'], ['median', 3, 'Median 3×3'],
+  ['rotate', 0.5, 'Rotate 0.5°'], ['rotate', 1.0, 'Rotate 1°'],
+];
+const MODE_DESC = {robust: 'ทนที่สุด แต่ซ่อนได้สั้น', balanced: 'ค่าแนะนำ: ทนพอดี ซ่อนได้ปานกลาง', capacity: 'ซ่อนได้ยาวที่สุด แต่เสียง่ายเมื่อรูปถูกบีบอัด'};
+const STATUS_TH = {ok: 'อ่านได้ครบ', damaged: 'ข้อความเสียหาย', no_message: 'ไม่พบข้อความ'};
+const S = {info: null, mode: 'balanced', stego: {}, wm: {}, judged: {}, auto: {}, open: null, results: {}};
 
-async function api(path,body){
+async function api(path, body) {
+  const btn = document.activeElement?.closest?.('.btn');  /* the button that started this call shows a spinner */
+  if (btn) { btn.classList.add('loading'); btn.setAttribute('aria-busy', 'true'); }
   $('#busy').classList.add('on');
-  try{
-    const r=await fetch(path,body===undefined?{}:{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
-    const j=await r.json(); return j;
-  }catch(e){return {error:'ติดต่อโปรแกรมไม่ได้ (ปิดหน้าต่าง python demo/app.py ไปหรือเปล่า?) '+e}}
-  finally{$('#busy').classList.remove('on')}
+  try {
+    const r = await fetch(path, body === undefined ? {} : {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(body)});
+    return await r.json();
+  } catch (e) {
+    return {error: 'ติดต่อโปรแกรมไม่ได้ (ปิดหน้าต่าง python demo/app.py ไปหรือเปล่า?) ' + e};
+  } finally {
+    $('#busy').classList.remove('on');
+    if (btn) { btn.classList.remove('loading'); btn.removeAttribute('aria-busy'); }
+  }
 }
-const fileToURL=f=>new Promise((ok,no)=>{const r=new FileReader();r.onload=()=>ok(r.result);r.onerror=no;r.readAsDataURL(f)});
-function stat(v,l){return `<div class="stat"><b>${v}</b><span>${l}</span></div>`}
-function statusBox(j){
-  if(j.error) return `<div class="status err"><div class="big">ทำไม่ได้</div>${esc(j.error)}</div>`;
-  return `<div class="status ${j.status}"><div class="big">${STATUS_LABEL[j.status]}</div>${esc(j.explain)}${j.status==='ok'?`<div class="msg">${esc(j.text)}</div>`:''}</div>`;
+function showErr(el, msg) { el.hidden = !msg; el.textContent = msg || ''; }
+
+/* ---------------------------------------------------------------- tabs */
+function go(page) {
+  $$('nav.tabs button').forEach(b => b.setAttribute('aria-selected', String(b.dataset.page === page)));
+  ['stego', 'wm', 'tests', 'how'].forEach(p => { $('#page-' + p).hidden = p !== page; });
+  try { history.replaceState(null, '', '#' + page); } catch (e) {}
+}
+$$('nav.tabs button').forEach(b => b.onclick = () => go(b.dataset.page));
+$$('[data-goto]').forEach(a => a.onclick = e => { e.preventDefault(); go(a.dataset.goto); });
+
+/* ---------------------------------------------------------------- compare viewer (drag the line) */
+function makeCompare(box, leftSrc, leftTag, rightSrc, rightTag, pixelated) {
+  box._args = [leftSrc, leftTag, rightSrc, rightTag, pixelated];
+  box.classList.remove('logos');
+  if (box._layout === 'side') {
+    box.classList.add('side');
+    box.onpointerdown = box.onpointermove = box.onpointerup = box.onpointercancel = null;
+    box.innerHTML = `<figure><img src="${leftSrc}" alt="${esc(leftTag)}"><figcaption><b>${esc(leftTag)}</b></figcaption></figure>
+      <figure><img class="${pixelated ? 'px' : ''}" src="${rightSrc}" alt="${esc(rightTag)}"><figcaption><b>${esc(rightTag)}</b></figcaption></figure>`;
+    box.hidden = false;
+    return;
+  }
+  box.classList.remove('side');
+  const split = box._split ?? 50;
+  box.innerHTML = `<img src="${leftSrc}" alt="${esc(leftTag)}"><img class="over${pixelated ? ' px' : ''}" src="${rightSrc}" alt="${esc(rightTag)}" style="clip-path:inset(0 0 0 ${split}%)">
+    <div class="line" style="left:${split}%" role="slider" tabindex="0" aria-label="เส้นแบ่งภาพ" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${split}"></div>
+    <span class="tag l">${esc(leftTag)}</span><span class="tag r">${esc(rightTag)}</span>`;
+  const over = box.querySelector('img.over'), line = box.querySelector('.line');
+  const set = v => { v = Math.max(0, Math.min(100, v)); box._split = v; over.style.clipPath = `inset(0 0 0 ${v}%)`; line.style.left = v + '%'; line.setAttribute('aria-valuenow', Math.round(v)); };
+  const fromEvent = e => { const r = box.getBoundingClientRect(); set((e.clientX - r.left) / r.width * 100); };
+  box.onpointerdown = e => { box.setPointerCapture(e.pointerId); fromEvent(e); box.onpointermove = fromEvent; };
+  box.onpointerup = box.onpointercancel = () => { box.onpointermove = null; };
+  line.onkeydown = e => { if (e.key === 'ArrowLeft') set(box._split - 5); if (e.key === 'ArrowRight') set(box._split + 5); };
+  box.hidden = false;
 }
 
-/* tabs */
-$$('nav button').forEach(b=>b.onclick=()=>{$$('nav button').forEach(x=>x.setAttribute('aria-selected',x===b));
-  $$('section.tab').forEach(s=>s.classList.toggle('on',s.id==='tab-'+b.dataset.tab)); if(b.dataset.tab==='tests') renderLog();});
-
-/* cover picker (shared by both tabs) */
-async function setCover(dataURL,label){
-  const j=await api('/api/load',{image:dataURL});
-  if(j.error){alert(j.error);return}
-  S.cover=j.image; S.coverInfo=j; S.stego=null; S.sent=null; S.wm=null;
-  $$('[data-covernote]').forEach(n=>{n.hidden=false;n.innerHTML=`ใช้รูป <b>${esc(label)}</b> ขนาด ${j.width}×${j.height} พิกเซล`+(j.notes.length?'<br>'+j.notes.map(esc).join('<br>'):'')});
-  $('#embedOut').hidden=true; $('#wmOut').hidden=true; $('#extractOut').innerHTML=''; $('#attackOut').innerHTML=''; $('#wmExOut').innerHTML='';
-  renderModes(); updateCap(); refreshButtons();
+function setLayout(box, layout) {
+  box._layout = layout;
+  $$(`[data-layout-for="${box.id}"] button`).forEach(b => b.setAttribute('aria-pressed', String(b.dataset.layout === layout)));
+  if (box._redraw) box._redraw(); else if (box._args) makeCompare(box, ...box._args);
 }
-function renderPickers(){
-  const sm=S.info.samples;
-  $$('[data-nosample]').forEach(n=>n.hidden=sm.length>0);
-  $$('[data-picker]').forEach(p=>{
-    p.innerHTML=sm.map((s,i)=>`<button class="thumb" data-i="${i}"><img src="${s.image}" alt=""><span>${esc(s.label)}</span></button>`).join('');
-    p.querySelectorAll('.thumb').forEach(t=>t.onclick=()=>{$$('.thumb').forEach(x=>x.classList.toggle('sel',x.dataset.i===t.dataset.i));const s=sm[+t.dataset.i];setCover(s.image,`${s.label} (${s.name})`)});
+$$('[data-layout-for] button').forEach(b => b.onclick = () => setLayout($('#' + b.parentElement.dataset.layoutFor), b.dataset.layout));
+
+/* ---------------------------------------------------------------- zoom viewer (lightbox) */
+const LB = {z: 1, x: 0, y: 0, w: 0, h: 0, items: []};
+function openZoom(items, title) {
+  if (!items.length) return;
+  LB.items = items;
+  $('#lb-title').textContent = title || 'ขยายดูรูป';
+  $('#lb-panes').innerHTML = items.map(it => `<div class="lb-pane"><img src="${it.src}" alt="${esc(it.cap)}" draggable="false"><span class="cap">${esc(it.cap)}</span></div>`).join('');
+  $('#lb').hidden = false; document.body.style.overflow = 'hidden';
+  const img = $('#lb-panes img');
+  const ready = () => { LB.w = img.naturalWidth; LB.h = img.naturalHeight; zoomFit(); };
+  img.complete ? ready() : img.onload = ready;
+  $('#lb [data-z=close]').focus();
+}
+function closeZoom() { $('#lb').hidden = true; document.body.style.overflow = ''; $('#lb-panes').innerHTML = ''; }
+function applyZoom() {
+  $$('#lb-panes img').forEach(im => {
+    im.style.transform = `translate(${LB.x}px,${LB.y}px) scale(${LB.z})`;
+    im.classList.toggle('px', LB.z >= 2);   /* show real pixels (and 8x8 block steps) when zoomed in */
   });
-  $$('[data-upload]').forEach(u=>u.onchange=async()=>{if(u.files[0]){$$('.thumb').forEach(x=>x.classList.remove('sel'));setCover(await fileToURL(u.files[0]),u.files[0].name)}});
+  $('#lb-z').textContent = Math.round(LB.z * 100) + '%';
 }
+function paneSize() { const p = $('#lb-panes .lb-pane'); return p ? [p.clientWidth, p.clientHeight] : [1, 1]; }
+function zoomTo(z, cx, cy) {
+  const [pw, ph] = paneSize();
+  cx = cx ?? pw / 2; cy = cy ?? ph / 2;
+  z = Math.max(0.1, Math.min(32, z));
+  LB.x = cx - (cx - LB.x) * z / LB.z; LB.y = cy - (cy - LB.y) * z / LB.z; LB.z = z;
+  applyZoom();
+}
+function zoomFit() {
+  const [pw, ph] = paneSize();
+  LB.z = Math.min(pw / LB.w, ph / LB.h) * 0.96;
+  LB.x = (pw - LB.w * LB.z) / 2; LB.y = (ph - LB.h * LB.z) / 2;
+  applyZoom();
+}
+$('#lb').addEventListener('click', e => {
+  const b = e.target.closest('[data-z]'); if (!b) return;
+  const k = b.dataset.z;
+  if (k === 'close') closeZoom();
+  else if (k === 'in') zoomTo(LB.z * 1.5);
+  else if (k === 'out') zoomTo(LB.z / 1.5);
+  else if (k === 'fit') zoomFit();
+  else if (k === 'one') zoomTo(1);
+});
+$('#lb-panes').addEventListener('wheel', e => {
+  const pane = e.target.closest('.lb-pane'); if (!pane) return;
+  e.preventDefault();
+  const r = pane.getBoundingClientRect();
+  zoomTo(LB.z * (e.deltaY < 0 ? 1.2 : 1 / 1.2), e.clientX - r.left, e.clientY - r.top);
+}, {passive: false});
+$('#lb-panes').addEventListener('dblclick', e => {
+  const pane = e.target.closest('.lb-pane'); if (!pane) return;
+  const r = pane.getBoundingClientRect(); zoomTo(LB.z * 2, e.clientX - r.left, e.clientY - r.top);
+});
+$('#lb-panes').addEventListener('pointerdown', e => {
+  const pane = e.target.closest('.lb-pane'); if (!pane) return;
+  pane.setPointerCapture(e.pointerId); pane.classList.add('drag');
+  let px = e.clientX, py = e.clientY;
+  pane.onpointermove = ev => { LB.x += ev.clientX - px; LB.y += ev.clientY - py; px = ev.clientX; py = ev.clientY; applyZoom(); };
+  pane.onpointerup = pane.onpointercancel = () => { pane.onpointermove = null; pane.classList.remove('drag'); };
+});
+document.addEventListener('keydown', e => {
+  if ($('#lb').hidden) return;
+  if (e.key === 'Escape') closeZoom();
+  else if (e.key === '+' || e.key === '=') zoomTo(LB.z * 1.5);
+  else if (e.key === '-') zoomTo(LB.z / 1.5);
+  else if (e.key === '0') zoomFit();
+});
+window.addEventListener('resize', () => { if (!$('#lb').hidden) zoomFit(); });
+const capOf = img => img.closest('figure')?.querySelector('figcaption')?.textContent.trim() || img.alt || '';
+/* click a result image: open it together with the other images of the same group */
+document.addEventListener('click', e => {
+  const img = e.target.closest('.compare.side figure img, .compare.logos img, .tp-run figure img');
+  if (!img) return;
+  const group = img.closest('.compare, .imgs');
+  const imgs = [...group.querySelectorAll('figure img')];
+  openZoom(imgs.map(i => ({src: i.src, cap: capOf(i)})), 'ขยายดูรูป · ภาพในกลุ่มเดียวกันซูมและเลื่อนพร้อมกัน');
+});
+$$('[data-zoom]').forEach(b => b.onclick = () => {
+  const box = $('#' + b.dataset.zoom);
+  const figs = box.querySelectorAll('figure img');
+  if (figs.length) openZoom([...figs].map(i => ({src: i.src, cap: capOf(i)})), 'ขยายดูรูป · ภาพทั้งหมดซูมและเลื่อนพร้อมกัน');
+  else if (box._args) openZoom([{src: box._args[0], cap: box._args[1]}, {src: box._args[2], cap: box._args[3]}], 'ขยายดูรูป · ภาพทั้งสองซูมและเลื่อนพร้อมกัน');
+});
 
-/* modes + capacity */
-function renderModes(){
-  const caps=S.coverInfo?S.coverInfo.capacity:null;
-  $('#modes').innerHTML=Object.entries(S.info.modes).map(([k,m])=>`<label class="mode ${k===S.mode?'sel':''}"><input type="radio" name="mode" value="${k}" ${k===S.mode?'checked':''}>${esc(m.label)}
-    <small>${caps?`จุได้ ${caps[k].bytes} ไบต์ (≈ ${Math.floor(caps[k].bytes/3)} ตัวอักษรไทย)`:'เลือกรูปก่อน'} · Δ = ${m.delta}</small></label>`).join('');
-  $$('#modes input').forEach(r=>r.onchange=()=>{S.mode=r.value;$('#mode2').value=r.value;renderModes();updateCap()});
-  $('#mode2').innerHTML=Object.entries(S.info.modes).map(([k,m])=>`<option value="${k}" ${k===S.mode?'selected':''}>${esc(m.label)}</option>`).join('');
+/* ---------------------------------------------------------------- shared: image sources */
+function fillSources() {
+  $$('[data-src]').forEach(sel => {
+    sel.innerHTML = S.info.samples.map((s, i) => `<option value="${i}">${esc(s.label)} (${esc(s.name)})</option>`).join('')
+      || '<option value="">ไม่พบรูปตัวอย่าง — กด Upload</option>';
+  });
+  $$('[data-attacks]').forEach(sel => { sel.innerHTML = ATTACKS.map((a, i) => `<option value="${i}">${esc(a[2])}</option>`).join(''); });
 }
-function updateCap(){
-  const bytes=new TextEncoder().encode($('#msg').value).length;
-  if(!S.coverInfo){$('#captext').textContent='เลือกรูปก่อน';return}
-  const ecc=$('#ecc1').checked, cap=S.coverInfo.capacity[S.mode][ecc?'bytes_ecc':'bytes'], pct=Math.min(100,100*bytes/Math.max(cap,1));
-  $('#capbar').classList.toggle('over',bytes>cap); $('#capbar').firstElementChild.style.width=pct+'%';
-  $('#captext').textContent=`ใช้ไป ${bytes} จาก ${cap} ไบต์`+(ecc?' (แบบแก้บิตผิด)':'')+(bytes>cap?' — ยาวเกินความจุของโหมดนี้':'');
+async function loadCover(which, dataUrl) {
+  const T = S[which], root = $('#page-' + which);
+  const r = await api('/api/load', {image: dataUrl});
+  const err = root.querySelector('.err');
+  if (r.error) { showErr(err, r.error); return; }
+  showErr(err, '');
+  T.cover = r.image; T.coverInfo = r;
+  root.querySelector('[data-dims]').textContent = `${r.width} × ${r.height} · grayscale`;
+  root.querySelector('[data-notes]').textContent = r.notes.join(' · ');
+  if (which === 'stego') { resetStego(); updateCap(); $('#s-encode').disabled = false; $('#s-decode-cover').disabled = false; }
+  else { resetWm(); $('#w-embed').disabled = false; }
 }
-$('#msg').oninput=updateCap; $('#ecc1').onchange=updateCap;
-$('#fillShort').onclick=()=>{$('#msg').value='นัดบ่ายสาม ตึก 12';updateCap()};
-$('#fillLong').onclick=()=>{$('#msg').value='ข้อความนี้ยาวเกือบเต็มความจุของรูปในโหมดสมดุลเพื่อทดสอบว่าระบบยังซ่อนและอ่านกลับได้ครบทุกตัวอักษร';updateCap()};
+$$('[data-src]').forEach(sel => sel.onchange = () => {
+  const which = sel.id.startsWith('s') ? 'stego' : 'wm', s = S.info.samples[sel.value];
+  if (s) loadCover(which, s.image);
+});
+$$('[data-upload]').forEach(inp => inp.onchange = () => {
+  const f = inp.files[0]; if (!f) return;
+  const which = inp.closest('section').id === 'page-stego' ? 'stego' : 'wm';
+  const rd = new FileReader(); rd.onload = () => loadCover(which, rd.result); rd.readAsDataURL(f);
+});
 
-function refreshButtons(){
-  $('#doEmbed').disabled=!S.cover; $('#useCover').disabled=!S.cover; $('#useStego').disabled=!S.stego;
-  $('#doExtract').disabled=!S.recv; $('#doAttack').disabled=!S.stego;
-  $('#doWm').disabled=!S.cover; ['#exMarked','#exCover','#exAttacked','#exCoverAtt'].forEach(b=>$(b).disabled=!S.wm);
+/* ---------------------------------------------------------------- stego page */
+function bytesOf(t) { return new TextEncoder().encode(t).length; }
+function modeCap() { const c = S.stego.coverInfo?.capacity?.[S.mode]; return c ? ($('#s-ecc').checked ? c.bytes_ecc : c.bytes) : 0; }
+function updateCap() {
+  const n = bytesOf($('#s-msg').value), cap = modeCap(), m = S.info.modes[S.mode];
+  $('#s-count').textContent = `${n} / ${cap} bytes`;
+  $('#s-capbar').classList.toggle('over', n > cap);
+  $('#s-capbar').firstElementChild.style.width = cap ? Math.min(100, 100 * n / cap) + '%' : '0';
+  $('#s-modeinfo').textContent = `${m.b}×${m.b} blocks · Δ=${m.delta} · ${cap} bytes`;
+  $('#s-modedesc').textContent = MODE_DESC[S.mode];
+  $('#s-mode2').textContent = m.label;
 }
-
-/* embed */
-$('#doEmbed').onclick=async()=>{
-  const text=$('#msg').value, key=$('#key1').value, ecc=$('#ecc1').checked;
-  const j=await api('/api/stego/embed',{cover:S.cover,text,key,mode:S.mode,ecc});
-  $('#embedErr').hidden=!j.error; if(j.error){$('#embedErr').innerHTML=`<div class="big">ซ่อนไม่ได้</div>${esc(j.error)}`;$('#embedOut').hidden=true;return}
-  S.stego=j.image; S.sent={text,key,mode:S.mode,ecc};
-  $('#imgCover').src=S.cover; $('#imgStego').src=j.image; $('#imgDiff').src=j.diff; $('#dl').href=j.image;
-  $('#embedStats').innerHTML=stat(j.psnr+' dB','PSNR (ยิ่งสูงยิ่งเหมือน, ≥ 40 = ตาแยกไม่ออก)')+stat(j.max_change,'พิกเซลเปลี่ยนมากสุด (ระดับสี จาก 0–255)')
-    +stat(j.changed_pct+'%','พิกเซลที่ถูกเปลี่ยน')+stat(`${j.bits_used} / ${j.capacity}`,'บิตที่ใช้ / ความจุ')
-    +`</div><p class="hint" style="margin-top:6px">PSNR สูงกว่า 40.8 dB เพราะข้อความใช้แค่ ${Math.round(100*j.bits_used/j.capacity)}% ของบล็อก บล็อกที่เหลือไม่ถูกแตะเลย (ถ้าใช้เต็มความจุจะได้ ≈ 40.8 dB)</p><div class="stats">`
-    +(j.failed||j.weak?stat(`${j.failed} / ${j.weak}`,'บล็อกฝังไม่สำเร็จ / ฝังได้แต่เสี่ยง'):'');
-  $('#embedOut').hidden=false; $('#key2').value=key; $('#mode2').value=S.mode; $('#ecc2').checked=ecc; refreshButtons();
+$('#s-msg').oninput = updateCap; $('#s-ecc').onchange = () => { updateCap(); resetStego(); };
+$('#s-short').onclick = e => { e.preventDefault(); $('#s-msg').value = SHORT; updateCap(); };
+$('#s-long').onclick = e => { e.preventDefault(); $('#s-msg').value = LONG; updateCap(); };
+$$('#s-modes button').forEach(b => b.onclick = () => {
+  S.mode = b.dataset.mode; $$('#s-modes button').forEach(x => x.setAttribute('aria-pressed', String(x === b)));
+  updateCap(); resetStego();
+});
+function resetStego() {
+  const T = S.stego; T.stegoImg = null; T.attacked = null; T.view = 'stego';
+  $('#s-result').innerHTML = ''; $('#s-decode').disabled = true; $('#s-stats').textContent = '';
+  const dl = $('#s-download'); dl.setAttribute('aria-disabled', 'true'); dl.removeAttribute('href');
+  $$('#s-views button').forEach(b => { b.disabled = true; b.setAttribute('aria-pressed', String(b.dataset.view === 'stego')); });
+  $('#s-empty').hidden = true;
+  makeCompare($('#s-compare'), T.cover, 'Original', T.cover, 'ยังไม่ได้ Encode', false);
+}
+function drawStego() {
+  const T = S.stego, v = T.view;
+  const src = v === 'diff' ? T.diff : v === 'attacked' && T.attacked ? T.attacked : T.stegoImg;
+  const tag = v === 'diff' ? 'จุดที่ถูกแก้ ×20' : v === 'attacked' ? `หลัง attack: ${T.attackLabel || 'none'}` : `รูปที่ซ่อนแล้ว · PSNR ${T.psnr} dB`;
+  makeCompare($('#s-compare'), T.cover, 'Original', src, tag, v === 'diff');
+  $$('#s-views button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.view === v)));
+}
+$$('#s-views button').forEach(b => b.onclick = () => { S.stego.view = b.dataset.view; drawStego(); });
+$('#s-encode').onclick = async () => {
+  const T = S.stego, key = $('#s-key1').value;
+  const r = await api('/api/stego/embed', {cover: T.cover, text: $('#s-msg').value, key, mode: S.mode, ecc: $('#s-ecc').checked});
+  if (r.error) { showErr($('#s-err'), r.error); return; }
+  showErr($('#s-err'), r.failed ? `มี ${r.failed} บล็อกที่ซ่อนไม่สำเร็จ (บิตนั้นอาจอ่านผิด)` : '');
+  Object.assign(T, {stegoImg: r.image, diff: r.diff, psnr: r.psnr, sent: $('#s-msg').value, sentEcc: $('#s-ecc').checked, attacked: null, view: 'stego'});
+  $('#s-key2').value = key;
+  $('#s-stats').textContent = `PSNR ${r.psnr} dB · max |Δpixel| ${r.max_change} · ${r.bits_used} / ${r.capacity} bits`;
+  const dl = $('#s-download'); dl.href = r.image; dl.setAttribute('aria-disabled', 'false');
+  $('#s-views [data-view=stego]').disabled = false; $('#s-views [data-view=diff]').disabled = false;
+  $('#s-decode').disabled = false; $('#s-result').innerHTML = '';
+  setLayout($('#s-compare'), 'side');
+  drawStego();
+};
+function resultHTML(r, extra) {
+  if (r.error) return `<div class="err">${esc(r.error)}</div>`;
+  const rows = (extra || []).map(([k, v]) => `<dt>${esc(k)}</dt><dd>${esc(v)}</dd>`).join('');
+  return `<div class="result ${r.status}"><div class="head"><span class="pill">${r.status}</span><span>${esc(STATUS_TH[r.status])}</span></div>
+    ${r.status === 'ok' ? `<div class="msg">${esc(r.text)}</div>` : `<div class="msg" style="font-size:15px;color:var(--ink2)">${esc(r.explain)}</div>`}
+    ${rows ? `<dl>${rows}</dl>` : ''}</div>`;
+}
+$('#s-decode').onclick = async () => {
+  const T = S.stego, a = ATTACKS[$('#s-attack').value];
+  const r = await api('/api/stego/attack', {image: T.stegoImg, text: T.sent, key: $('#s-key2').value, mode: S.mode, kind: a[0], level: a[1], ecc: T.sentEcc});
+  if (r.error) { $('#s-result').innerHTML = resultHTML(r); return; }
+  T.attacked = a[0] === 'none' ? null : r.image; T.attackLabel = r.attack;
+  const b = $('#s-views [data-view=attacked]'); b.disabled = !T.attacked;
+  if (T.attacked) T.view = 'attacked'; else if (T.view === 'attacked') T.view = 'stego';
+  drawStego();
+  const extra = [['BER', `${r.wrong_bits} / ${r.bits} bits`], ['CRC-16', r.status === 'ok' ? 'pass' : 'fail'], ['attack', r.attack]];
+  if (r.ecc) extra.push(['ECC แก้ไป', `${r.corrected} bits`]);
+  $('#s-result').innerHTML = resultHTML(r, extra);
+};
+$('#s-recv').onchange = () => {
+  const f = $('#s-recv').files[0]; if (!f) return;
+  const rd = new FileReader();
+  rd.onload = async () => {
+    const r = await api('/api/stego/extract', {image: rd.result, key: $('#s-key2').value, mode: S.mode, ecc: $('#s-ecc').checked});
+    $('#s-result').innerHTML = resultHTML(r, [['อ่านจาก', f.name], ['mode', S.info.modes[S.mode].label]]);
+    $('#s-recv').value = '';
+  };
+  rd.readAsDataURL(f);
+};
+$('#s-decode-cover').onclick = async () => {
+  const r = await api('/api/stego/extract', {image: S.stego.cover, key: $('#s-key2').value, mode: S.mode, ecc: $('#s-ecc').checked});
+  $('#s-result').innerHTML = resultHTML(r, [['อ่านจาก', 'รูปต้นฉบับ (ไม่เคยซ่อน)']]);
 };
 
-/* receiver */
-function setRecv(img,label){S.recv=img;S.recvLabel=label;$('#recvImg').src=img;$('#recvCap').textContent=label;$('#recvFig').hidden=false;refreshButtons()}
-$('#useStego').onclick=()=>setRecv(S.stego,'รูปที่เพิ่งซ่อนข้อความ');
-$('#useCover').onclick=()=>setRecv(S.cover,'รูปต้นฉบับ (ไม่เคยซ่อนอะไร)');
-$('#recvUpload').onchange=async e=>{const f=e.target.files[0];if(f)setRecv(await fileToURL(f),f.name)};
-$('#doExtract').onclick=async()=>{
-  const j=await api('/api/stego/extract',{image:S.recv,key:$('#key2').value,mode:$('#mode2').value,ecc:$('#ecc2').checked});
-  $('#extractOut').innerHTML=statusBox(j)+(j.corrected?`<p class="hint" style="margin-top:6px">Hamming แก้บิตผิดให้ ${j.corrected} บิต</p>`:'')+(j.notes&&j.notes.length?`<div class="note warn">${j.notes.map(esc).join('<br>')}</div>`:'');
+/* ---------------------------------------------------------------- watermark page */
+const ALPHA_ROWS = [8, 12, 16, 24];
+$('#w-alpha').oninput = () => {
+  const a = +$('#w-alpha').value; $('#w-alpha-v').textContent = a;
+  $$('.alpha-table [data-a]').forEach(td => td.classList.toggle('on', +td.dataset.a === a));
+  resetWm();
+};
+$('#w-logo').oninput = () => resetWm();
+function resetWm() {
+  const T = S.wm; Object.assign(T, {marked: null, keyId: null, diff: null, check: null, view: 'marked'});
+  $('#w-result').innerHTML = ''; $('#w-check').disabled = true; $('#w-stats').textContent = '';
+  const dl = $('#w-download'); dl.setAttribute('aria-disabled', 'true'); dl.removeAttribute('href');
+  $$('#w-views button').forEach(b => { b.disabled = true; b.setAttribute('aria-pressed', String(b.dataset.view === 'marked')); });
+  $('#w-empty').hidden = true;
+  if (T.cover) makeCompare($('#w-compare'), T.cover, 'Original', T.cover, 'ยังไม่ได้ Embed', false);
+}
+function drawWm() {
+  const T = S.wm, box = $('#w-compare'), v = T.view;
+  $$('#w-views button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.view === v)));
+  if (!T.marked) return;
+  const ps = T.psnr === null ? '∞' : T.psnr;
+  if (v === 'logos' && T.check) {
+    const {m, o, attack} = T.check;
+    const cap = (title, r) => `<b>${title}</b><span class="score">shift ${r.shift.toFixed(3)} · NCC ${r.ncc.toFixed(3)}</span><span class="ev ${r.evidence}">${EVID[r.evidence]}</span>`;
+    box.classList.remove('side'); box.classList.add('logos');
+    box.onpointerdown = box.onpointermove = box.onpointerup = box.onpointercancel = null;
+    box.innerHTML = `<figure><img src="${T.logo}" alt="โลโก้ที่ฝัง"><figcaption><b>โลโก้ที่ฝัง (W)</b><span class="score">ต้นแบบ ${T.k} × ${T.k}</span></figcaption></figure>
+      <figure><img src="${m.logo}" alt="โลโก้ที่ดึงจากรูปที่ฝัง"><figcaption>${cap('ดึงจาก Watermarked', m)}</figcaption></figure>
+      <figure><img src="${o.logo}" alt="โลโก้ที่ดึงจากรูปที่ไม่เคยฝัง"><figcaption>${cap('ดึงจาก Original (ไม่เคยฝัง)', o)}</figcaption></figure>`;
+    box.hidden = false;
+    return;
+  }
+  if (v === 'diff') makeCompare(box, T.cover, 'Original', T.diff, 'จุดที่ถูกแก้ ×20', true);
+  else if (v === 'attacked' && T.check?.m.attacked) makeCompare(box, T.cover, 'Original', T.check.m.attacked, `Watermarked หลัง attack: ${T.check.attack}`, false);
+  else makeCompare(box, T.cover, 'Original', T.marked, `Watermarked · PSNR ${ps} dB`, false);
+}
+$('#w-compare')._redraw = drawWm;
+$$('#w-views button').forEach(b => b.onclick = () => { S.wm.view = b.dataset.view; drawWm(); });
+$('#w-embed').onclick = async () => {
+  const T = S.wm, alpha = +$('#w-alpha').value;
+  const r = await api('/api/wm/embed', {cover: T.cover, alpha, logo_text: $('#w-logo').value});
+  if (r.error) { showErr($('#w-err'), r.error); return; }
+  showErr($('#w-err'), '');
+  Object.assign(T, {marked: r.image, keyId: r.key_id, psnr: r.psnr, diff: r.diff, logo: r.logo, k: r.k, check: null, view: 'marked'});
+  const img = $('#w-logo-img'); img.src = r.logo; img.hidden = false;
+  const ps = r.psnr === null ? '∞' : r.psnr;
+  $('#w-compare')._layout = 'side';
+  $$('[data-layout-for="w-compare"] button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.layout === 'side')));
+  $('#w-views [data-view=marked]').disabled = false; $('#w-views [data-view=diff]').disabled = false;
+  $('#w-views [data-view=attacked]').disabled = true; $('#w-views [data-view=logos]').disabled = true;
+  drawWm();
+  $('#w-stats').textContent = `W = ${r.k} × ${r.k} · α = ${alpha} · PSNR ${ps} dB`;
+  const dl = $('#w-download'); dl.href = r.image; dl.setAttribute('aria-disabled', 'false');
+  $('#w-check').disabled = false; $('#w-result').innerHTML = '';
+};
+async function wmCheckOne(img, a) {
+  let target = img, attacked = null;
+  if (a[0] !== 'none') {
+    const at = await api('/api/wm/attack', {image: img, kind: a[0], level: a[1]});
+    if (at.error) return at;
+    target = attacked = at.image;
+  }
+  const r = await api('/api/wm/extract', {image: target, key_id: S.wm.keyId});
+  r.attacked = attacked;
+  return r;
+}
+const EVID = {yes: 'มีลายน้ำของเรา', no: 'ไม่มีลายน้ำของเรา', unsure: 'ไม่แน่ใจ'};
+$('#w-check').onclick = async () => {
+  const a = ATTACKS[$('#w-attack').value];
+  const m = await wmCheckOne(S.wm.marked, a), o = await wmCheckOne(S.wm.cover, a);
+  if (m.error || o.error) { $('#w-result').innerHTML = `<div class="err">${esc(m.error || o.error)}</div>`; return; }
+  S.wm.check = {m, o, attack: a[0] === 'none' ? 'none' : a[2]};
+  $('#w-views [data-view=attacked]').disabled = !m.attacked;
+  $('#w-views [data-view=logos]').disabled = false;
+  S.wm.view = 'logos'; drawWm();
+  const v = (who, r) => `<div class="verdict ${r.evidence}"><div class="who">${who}</div><div class="what">${EVID[r.evidence]}</div></div>`;
+  $('#w-result').innerHTML = `
+    <div class="verdicts">${v('Watermarked', m)}${v('Original (ไม่เคยฝัง)', o)}</div>
+    <p class="note" style="margin:0">โลโก้ขึ้นได้ทั้งสองรูป เพราะ key ที่เก็บไว้ตอนฝังจำหน้าตาโลโก้ไว้เกือบทั้งหมด จึง<b>ตัดสินจากรูปโลโก้ไม่ได้</b> ให้ดู shift score แทน · ดูโลโก้ขนาดใหญ่ได้ที่จอกลาง${a[0] !== 'none' ? ` · attack: <span class="mono">${esc(a[2])}</span> (ดูรูปได้ที่ปุ่ม "หลัง attack")` : ''}</p>
+    <table class="cmp">
+      <thead><tr><th></th><th>Watermarked</th><th>Original</th></tr></thead>
+      <tbody>
+        <tr><td><b class="mono">shift score</b><span class="sub">คะแนนยืนยันเจ้าของ 0–1 · ตั้งแต่ 0.8 = รูปของเรา</span></td>
+            <td class="num ${m.shift >= 0.8 ? 'ok' : ''}">${m.shift.toFixed(3)}</td><td class="num ${o.shift >= 0.8 ? 'ok' : ''}">${o.shift.toFixed(3)}</td></tr>
+        <tr><td><span class="mono">NCC</span><span class="sub">ความเหมือนโลโก้ · สูงได้แม้ไม่เคยฝัง</span></td>
+            <td class="num" style="font-weight:400">${m.ncc.toFixed(3)}</td><td class="num" style="font-weight:400">${o.ncc.toFixed(3)}</td></tr>
+      </tbody>
+    </table>`;
 };
 
-/* attack */
-['#att1','#att2'].forEach(s=>$(s).innerHTML=ATTACKS.map((a,i)=>`<option value="${i}" ${a[0]==='jpeg'&&a[1]===75?'selected':''}>${a[2]}</option>`).join(''));
-$('#doAttack').onclick=async()=>{
-  const a=ATTACKS[+$('#att1').value];
-  const j=await api('/api/stego/attack',{image:S.stego,text:S.sent.text,key:S.sent.key,mode:S.sent.mode,kind:a[0],level:a[1],ecc:S.sent.ecc});
-  if(j.error){$('#attackOut').innerHTML=statusBox(j);return}
-  $('#attackOut').innerHTML=`<div class="imgs"><figure><img src="${j.image}" alt=""><figcaption>${esc(j.attack)} (PSNR เทียบรูปก่อนโจมตี ${j.psnr_attack??'∞'} dB)</figcaption></figure>
-    <div><div class="stats">${stat(`${j.wrong_bits} / ${j.bits}`,'บิตที่อ่านผิด (ก่อนแก้)')}${stat(j.ber+'%','BER (อัตราบิตผิด)')}${j.ecc?stat(j.corrected,'บิตที่ Hamming แก้ให้'):''}</div>${statusBox(j)}
-    <p class="hint" style="margin-top:8px">${j.wrong_bits===0?'ไม่มีบิตผิดเลย ข้อความรอด':j.ecc?(j.status==='ok'?'มีบิตผิด แต่ Hamming(7,4) แก้กลับได้ทั้งหมด ข้อความจึงรอด':'บิตผิดหนาแน่นเกินไป (มากกว่า 1 บิตในกลุ่ม 7 บิตเดียวกัน) Hamming แก้ไม่ไหว CRC จึงไม่ผ่าน'):'แค่บิตผิดบิตเดียว CRC ก็ไม่ผ่าน ระบบจึงปฏิเสธข้อความทั้งก้อน ดีกว่าแสดงข้อความผิดๆ · ลองเปิด "แก้บิตผิดอัตโนมัติ" แล้วซ่อนใหม่'}</p></div></div>`;
+/* ---------------------------------------------------------------- tests page */
+S.sel = null; S.testImage = null; S.testImageLabel = '';
+function caseById(id) { return S.info.cases.find(c => c.id === id); }
+function ownPhotos(c) {
+  const names = [...new Set(c.runs.map(r => r.image))];
+  const lab = n => (S.info.samples.find(x => x.name === n) || {label: n}).label;
+  return names.map(n => /^(ภาพ|รูป)/.test(lab(n)) ? lab(n) : 'รูป' + lab(n)).join(' + ');
+}
+const differs = id => S.auto[id] === false && S.results[id]?.custom_image;  /* "failed" only because another photo was used */
+function renderThumbs() {
+  const items = [`<button type="button" class="def" data-img="" aria-pressed="${!S.testImage}">ตามที่ตั้งไว้</button>`]
+    .concat(S.info.samples.map(sm => `<button type="button" data-img="${esc(sm.name)}" aria-pressed="${S.testImage === sm.name}" title="${esc(sm.label)}"><img src="${sm.image}" alt="${esc(sm.label)}"></button>`));
+  if (S.testImage && S.testImage.startsWith('data:')) items.push(`<button type="button" data-img="upload" aria-pressed="true" title="รูปที่อัปโหลด"><img src="${S.testImage}" alt="รูปที่อัปโหลด"></button>`);
+  $('#t-thumbs').innerHTML = items.join('');
+  const note = $('#t-imgnote');
+  note.textContent = S.testImage ? `ทุกกรณีใช้รูป: ${S.testImageLabel} · ผลที่คาดเขียนไว้สำหรับรูปเดิม จึงอาจต่างได้` : 'ใช้รูปที่ตั้งไว้ในแต่ละกรณี';
+  note.classList.toggle('warn', !!S.testImage);
+}
+function setTestImage(img, label) {
+  S.testImage = img || null; S.testImageLabel = label || '';
+  S.results = {}; S.auto = {};           // results belong to one photo; run again with the new one
+  renderThumbs(); renderList(); renderDetail();
+}
+$('#t-thumbs').onclick = e => {
+  const b = e.target.closest('button'); if (!b || b.dataset.img === 'upload') return;
+  const sm = S.info.samples.find(x => x.name === b.dataset.img);
+  setTestImage(b.dataset.img, sm ? sm.label : '');
+};
+$('#t-upload').onchange = () => {
+  const f = $('#t-upload').files[0]; if (!f) return;
+  const rd = new FileReader(); rd.onload = () => setTestImage(rd.result, f.name); rd.readAsDataURL(f);
+  $('#t-upload').value = '';
+};
+function renderSummary() {
+  const n = S.info.cases.length, vals = Object.values(S.judged);
+  const pass = vals.filter(v => v === 'pass').length, fail = vals.filter(v => v === 'fail').length;
+  const ran = Object.keys(S.auto).length, aPass = Object.values(S.auto).filter(v => v === true).length;
+  const nDiff = Object.keys(S.auto).filter(differs).length;
+  $('#t-sum').innerHTML = `<span>ยืนยันแล้ว <b>${vals.length}</b> / ${n} (ตรง ${pass} · ไม่ตรง ${fail})</span>
+    <div class="bar" aria-hidden="true"><i class="p" style="width:${100 * pass / n}%"></i><i class="f" style="width:${100 * fail / n}%"></i></div>
+    <span>ระบบเช็คผ่าน <b>${aPass}</b> / ${ran} ที่รันแล้ว${nDiff ? ` · ต่างจากที่คาดเพราะใช้รูปอื่น ${nDiff}` : ''}</span>`;
+}
+function stateOf(id) {
+  const j = S.judged[id];
+  if (j === 'pass') return ['pass', '✓', 'ยืนยันว่าตรง'];
+  if (j === 'fail') return ['fail', '✗', 'ยืนยันว่าไม่ตรง'];
+  if (S.auto[id] === true) return ['auto', '✓', 'ระบบเช็คผ่าน ยังไม่ได้ยืนยัน'];
+  if (differs(id)) return ['warn', '≠', 'ต่างจากที่คาด เพราะใช้รูปอื่น'];
+  if (S.auto[id] === false) return ['fail', '!', 'ระบบเช็คไม่ผ่าน'];
+  return ['', '', 'ยังไม่ได้รัน'];
+}
+function renderList() {
+  let html = '', group = '';
+  for (const c of S.info.cases) {
+    const g = c.kind === 'stego' ? 'ซ่อนข้อความ · S1–S14' : 'Watermark · W1–W6';
+    if (g !== group) { html += `<h3>${g}</h3>`; group = g; }
+    const [cls, sym, lab] = stateOf(c.id);
+    html += `<button type="button" data-id="${c.id}" aria-current="${S.sel === c.id}"><span class="cid">${c.id}</span><span class="ct">${esc(c.title)}</span><span class="st ${cls}" title="${lab}" aria-label="${lab}">${sym}</span></button>`;
+  }
+  $('#t-list').innerHTML = html;
+  renderSummary();
+}
+function chipsOf(c) {
+  return c.settings.split(' · ').map(t => {
+    const atk = /JPEG|noise|Crop|Rotate|Blur|Resize|Median/.test(t);
+    const photo = /รูป/.test(t) && !/รูปต้นฉบับ/.test(t);
+    return `<span class="${atk ? 'atk' : photo && S.testImage ? 'off' : ''}">${esc(t)}</span>`;
+  }).join('');
+}
+function runBlock(c, r) {
+  const fig = (src, cap, sq) => src ? `<figure><img ${sq ? 'class="sq"' : ''} src="${src}" alt="${esc(cap)}"><figcaption>${esc(cap)}</figcaption></figure>` : '';
+  const custom = S.results[c.id]?.custom_image;
+  const mark = r.auto === true ? '<span class="auto pass">✓ ตรงตามคาด</span>'
+    : r.auto === false ? (custom ? '<span class="auto warn">≠ ต่างจากที่คาด (รูปอื่น)</span>' : '<span class="auto fail">✗ ไม่ตรงตามคาด</span>') : '';
+  if (r.error) return `<div class="tp-run"><div class="rh"><b>${esc(r.label)}</b>${mark}</div><div class="err">${esc(r.error)}</div></div>`;
+  let head, imgs, meta;
+  if (c.kind === 'stego') {
+    const color = r.status === 'ok' ? 'var(--ok)' : r.status === 'damaged' ? '#B45309' : '#52525B';
+    head = `<span class="pill" style="background:${color};font-size:16px">${r.status}</span> ${esc(STATUS_TH[r.status])}`;
+    imgs = fig(r.cover, 'Original') + fig(r.stego, r.psnr ? `ซ่อนแล้ว · PSNR ${r.psnr} dB` : 'ซ่อนแล้ว') + fig(r.attacked, `หลัง ${r.attack}`);
+    meta = `${r.bits ? `BER ${r.wrong_bits}/${r.bits}` : 'อ่านจากรูปต้นฉบับ'} · CRC-16 ${r.status === 'ok' ? 'pass' : 'fail'}${r.corrected ? ` · ECC แก้ ${r.corrected} bits` : ''}`
+      + (r.status === 'ok' ? `</div><div class="msgline">“${esc(r.text)}”` : '');
+  } else {
+    const color = r.evidence === 'yes' ? 'var(--ok)' : r.evidence === 'unsure' ? '#B45309' : '#52525B';
+    head = `<span class="pill" style="background:${color};font-size:16px">${EVID[r.evidence]}</span>`;
+    imgs = fig(r.target === 'original' ? r.cover : r.stego, r.target === 'original' ? 'Original (ไม่เคยฝัง)' : `Watermarked · PSNR ${r.psnr ?? '∞'} dB`)
+      + (r.attacked ? fig(r.attacked, `หลัง ${r.attack}`) : '') + fig(r.logo, 'โลโก้ที่ดึงออกมา', true);
+    meta = `shift score ${r.shift.toFixed(3)} · NCC ${r.ncc.toFixed(3)}`;
+  }
+  return `<div class="tp-run"><div class="rh"><b>${esc(r.label)}</b>${head}${mark}</div><div class="imgs">${imgs}</div><div class="meta">${meta}</div></div>`;
+}
+function renderDetail() {
+  const box = $('#t-detail'), c = S.sel && caseById(S.sel);
+  if (!c) { box.innerHTML = '<div class="tp-empty">เลือกกรณีทางซ้าย หรือกด Run all</div>'; return; }
+  const res = S.results[c.id], j = S.judged[c.id], auto = S.auto[c.id];
+  const warn = differs(c.id);
+  const got = res ? (auto === true ? 'ตรงตามคาด' : warn ? 'ต่างจากที่คาด' : auto === false ? 'ไม่ตรงตามคาด' : 'ดูผลด้านล่าง') : 'ยังไม่ได้รัน';
+  const why = warn ? `<div class="why">ผลที่คาดเขียนไว้สำหรับ${esc(ownPhotos(c))} แต่รอบนี้ใช้${esc(S.testImageLabel)} ผลจึงต่างได้ กด "ตามที่ตั้งไว้" ด้านบนเพื่อดูผลกับรูปเดิม</div>` : '';
+  box.innerHTML = `
+    <div class="top"><span class="bid">${c.id}</span><h2>${esc(c.title)}</h2><button class="btn" data-run="${c.id}">${res ? 'Run อีกครั้ง' : 'Run'}</button></div>
+    <div class="tp-chips">${chipsOf(c)}${S.testImage ? `<span class="atk">ใช้รูป: ${esc(S.testImageLabel)} (แทน${esc(ownPhotos(c))})</span>` : ''}</div>
+    <div class="tp-expect">
+      <div class="tp-box exp"><div class="k">ผลที่คาด</div><div class="v">${esc(c.expected)}</div></div>
+      <div class="tp-box got ${auto === true ? 'pass' : warn ? 'warn' : auto === false ? 'fail' : ''}"><div class="k">ระบบเช็ค</div><div class="v">${got}</div>${why}</div>
+    </div>
+    ${res ? res.runs.map(r => runBlock(c, r)).join('') : ''}
+    <div class="tp-judge">
+      <span class="q">คุณเห็นว่าผลตรงกับที่คาดไหม</span>
+      <button class="btn okb" data-judge="pass" aria-pressed="${j === 'pass'}" ${res ? '' : 'disabled'}>ตรง</button>
+      <button class="btn nob" data-judge="fail" aria-pressed="${j === 'fail'}" ${res ? '' : 'disabled'}>ไม่ตรง</button>
+      <label for="t-note" style="position:absolute;left:-9999px">หมายเหตุ</label>
+      <input type="text" id="t-note" placeholder="หมายเหตุ (ไม่ใส่ก็ได้)" ${res ? '' : 'disabled'}>
+      <span class="saved" id="t-saved"></span>
+      <button class="btn sec next" data-next>กรณีถัดไป →</button>
+    </div>`;
+}
+async function runCase(id) {
+  const r = await api('/api/case/run', S.testImage ? {id, image: S.testImage} : {id});
+  if (r.error) { S.results[id] = {runs: [{label: id, error: r.error, auto: false}]}; S.auto[id] = false; return; }
+  S.results[id] = r; S.auto[id] = r.auto;
+}
+$('#t-list').onclick = e => {
+  const b = e.target.closest('button[data-id]'); if (!b) return;
+  S.sel = b.dataset.id; renderList(); renderDetail();
+};
+$('#t-detail').onclick = async e => {
+  const run = e.target.closest('[data-run]'), judge = e.target.closest('[data-judge]'), next = e.target.closest('[data-next]');
+  if (run) { await runCase(run.dataset.run); renderList(); renderDetail(); return; }
+  if (next) {
+    const ids = S.info.cases.map(c => c.id); S.sel = ids[(ids.indexOf(S.sel) + 1) % ids.length];
+    renderList(); renderDetail(); return;
+  }
+  if (judge) {
+    const c = caseById(S.sel), res = S.results[S.sel], v = judge.dataset.judge;
+    const observed = (S.testImage ? `[รูป: ${S.testImageLabel}] ` : '') + res.runs.map(r => `${r.label}: ${r.error ? 'refused' : (r.status || EVID[r.evidence] + ' shift=' + r.shift)}`).join(' | ');
+    const note = $('#t-note').value;
+    const out = await api('/api/log', {tester: $('#t-name').value, case_id: c.id, observed, matched: v === 'pass', note});
+    if (out.error) { $('#t-saved').textContent = out.error; return; }
+    S.judged[c.id] = v; renderList(); renderDetail(); $('#t-saved').textContent = 'บันทึกแล้ว';
+  }
+};
+$('#t-runall').onclick = async () => {
+  $('#t-runall').disabled = true;
+  for (const c of S.info.cases) { await runCase(c.id); renderList(); if (S.sel === c.id) renderDetail(); }
+  if (!S.sel) S.sel = S.info.cases[0].id;
+  renderList(); renderDetail();
+  $('#t-runall').disabled = false;
 };
 
-/* watermark */
-$('#alpha').oninput=()=>$('#alphaV').textContent=$('#alpha').value;
-let logoUpload=null; $('#logoUpload').onchange=async e=>{const f=e.target.files[0];logoUpload=f?await fileToURL(f):null};
-$('#logoText').oninput=()=>{logoUpload=null;$('#logoUpload').value=''};
-$('#doWm').onclick=async()=>{
-  const j=await api('/api/wm/embed',{cover:S.cover,alpha:+$('#alpha').value,logo_text:$('#logoText').value,logo_image:logoUpload});
-  $('#wmErr').hidden=!j.error; if(j.error){$('#wmErr').textContent=j.error;return}
-  S.wm=j; $('#wmCover').src=S.cover; $('#wmMarked').src=j.image; $('#wmLogo').src=j.logo; $('#wmDl').href=j.image;
-  const same=j.psnr===null;
-  $('#wmStats').innerHTML=stat((same?'∞':j.psnr)+' dB','PSNR'+(same?' (รูปเหมือนเดิมเป๊ะหลังปัดเศษ: ลายน้ำอ่อนจนหายไปตอนปัดเป็นจำนวนเต็ม)':''))+stat('α = '+$('#alpha').value,'ความแรง')+stat(j.k+'×'+j.k,'ขนาดลายน้ำ');
-  $('#wmOut').hidden=false; $('#wmExOut').innerHTML=''; refreshButtons();
-};
-async function wmExtract(img,label,attackKind){
-  let src=img, att='';
-  if(attackKind!==undefined){const a=ATTACKS[+$('#att2').value];const r=await api('/api/wm/attack',{image:img,kind:a[0],level:a[1]});if(r.error){$('#wmExOut').innerHTML=statusBox(r);return}src=r.image;att=` + ${r.attack}`}
-  const j=await api('/api/wm/extract',{image:src,key_id:S.wm.key_id});
-  if(j.error){$('#wmExOut').innerHTML=statusBox(j);return}
-  const cls=j.shift>=0.8?'ok':j.shift<=0.3?'no_message':'damaged';
-  $('#wmExOut').insertAdjacentHTML('afterbegin',`<div class="card" style="background:var(--bg);margin-top:12px"><div class="row">
-    <figure style="flex:0 1 200px"><img class="px" src="${j.logo}" alt=""><figcaption>ลายน้ำที่ถอดได้</figcaption></figure>
-    <div class="grow"><div class="big" style="font-weight:600">${esc(label+att)}</div>
-      <div class="stats">${stat(j.ncc.toFixed(3),'NCC กับโลโก้จริง (1 = เหมือนเป๊ะ)')}${stat(j.shift.toFixed(3),'shift score (ของเรา)')}</div>
-      <div class="status ${cls}">${esc(j.verdict)}</div></div></div></div>`);
-}
-$('#exMarked').onclick=()=>wmExtract(S.wm.image,'ถอดจากรูปที่ฝังลายน้ำ');
-$('#exCover').onclick=()=>wmExtract(S.cover,'ถอดจากรูปต้นฉบับ (ไม่เคยฝัง)');
-$('#exAttacked').onclick=()=>wmExtract(S.wm.image,'รูปที่ฝังลายน้ำ',true);
-$('#exCoverAtt').onclick=()=>wmExtract(S.cover,'รูปต้นฉบับ (ไม่เคยฝัง)',true);
-
-/* tests */
-function renderCases(){
-  $('#caseList').innerHTML=S.info.cases.map(c=>`<div class="case" id="case-${c.id}"><h3><span class="id">${c.id}</span>${esc(c.title)} <span class="tag">${c.tab==='wm'?'ลายน้ำ':'ซ่อนข้อความ'}</span></h3>
-    <p><b>ทำ:</b> ${esc(c.steps)}</p><p class="exp"><b>ควรได้:</b> ${esc(c.expected)}</p>
-    <div class="grid"><input type="text" placeholder="สิ่งที่เห็นจริง เช่น ok ได้ข้อความครบ" data-obs>
-      <select data-match><option value="1">ตรงกับที่คาด</option><option value="0">ไม่ตรง</option></select>
-      <input type="text" placeholder="หมายเหตุ (ไม่บังคับ)" data-note>
-      <button class="btn sec" data-save>บันทึก</button></div></div>`).join('');
-  $$('#caseList .case').forEach(el=>{const id=el.id.slice(5);el.querySelector('[data-save]').onclick=async()=>{
-    const j=await api('/api/log',{tester:$('#tester').value,case_id:id,observed:el.querySelector('[data-obs]').value,matched:el.querySelector('[data-match]').value==='1',note:el.querySelector('[data-note]').value});
-    if(j.error){alert(j.error);return} el.classList.add('done'); S.info.log=j.summary; renderLog();}});
-}
-function renderLog(){
-  const L=S.info.log||{rows:[],testers:[],cases_done:0,total:0};
-  $('#progress').innerHTML=stat(`${L.testers.length} / 2`,'จำนวนผู้ทดสอบ (เป้า ≥ 2)')+stat(`${L.cases_done} / ${S.info.cases.length}`,'กรณีที่มีคนลองแล้ว (เป้า ≥ 10)')+stat(L.total||0,'บันทึกทั้งหมด');
-  $('#logTbl').innerHTML='<tr><th>เวลา</th><th>ผู้ทดสอบ</th><th>กรณี</th><th>สิ่งที่เห็น</th><th>ตรง?</th><th>หมายเหตุ</th></tr>'+
-    (L.rows.length?L.rows.slice().reverse().map(r=>`<tr><td class="mono">${esc(r.time.replace('T',' '))}</td><td>${esc(r.tester)}</td><td>${esc(r.case_id)}</td><td>${esc(r.observed)}</td><td>${r.matched==='yes'?'✅':'❌'}</td><td>${esc(r.note)}</td></tr>`).join(''):'<tr><td colspan="6" class="hint">ยังไม่มีบันทึก</td></tr>');
-}
-
-(async()=>{S.info=await api('/api/info'); if(S.info.error){document.body.insertAdjacentHTML('afterbegin',`<div class="status err">${esc(S.info.error)}</div>`);return}
-  renderPickers(); renderModes(); renderCases(); renderLog(); refreshButtons();})();
+/* ---------------------------------------------------------------- start */
+(async () => {
+  $('#host').textContent = 'local · ' + location.host;
+  S.info = await api('/api/info');
+  if (S.info.error) { document.body.insertAdjacentHTML('afterbegin', `<div class="err">${esc(S.info.error)}</div>`); return; }
+  fillSources(); updateCap(); S.sel = S.info.cases[0].id; renderThumbs(); renderList(); renderDetail();
+  const p = location.hash.slice(1); if (['stego', 'wm', 'tests', 'how'].includes(p)) go(p);
+  if (S.info.samples.length) { loadCover('stego', S.info.samples[0].image); loadCover('wm', S.info.samples[0].image); }
+  else { $('#s-empty').textContent = 'ไม่พบรูปตัวอย่างใน data/images — กด Upload เพื่อเลือกรูปของคุณ'; $('#w-empty').textContent = $('#s-empty').textContent; }
+})();
 </script>
 </body>
 </html>
