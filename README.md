@@ -1,6 +1,6 @@
 # Behind the Images — SVD-based Digital Watermarking & Steganography
 
-โครงงานวิชาพีชคณิตเชิงเส้น: ใช้ Singular Value Decomposition (SVD) ทำงาน 2 อย่างกับภาพ grayscale
+โครงงานวิชา Elementary Differential Equations and Linear Algebra: ใช้ Singular Value Decomposition (SVD) ทำงาน 2 อย่างกับภาพ grayscale
 
 1. **Watermarking** ตามวิธีของ Liu & Tan (2002) คือบวก watermark เข้าไปในค่า singular value ของทั้งภาพ
 2. **Steganography** ด้วย QIM คือแบ่งภาพเป็น block ขนาด b×b แล้วเลื่อน singular value ของแต่ละ block ให้ไปอยู่ในช่วง (interval) ที่แทนบิต 0 หรือ 1 (block ละ 1 bit) มีการตรวจซ้ำหลังปัดเศษ pixel (closed-loop พร้อม safety margin Δ/4), key (สร้างตำแหน่งขอบช่วงด้วย PBKDF2) และเปิดใช้ Hamming(7,4) เพื่อแก้บิตที่ผิดได้
@@ -15,7 +15,7 @@
 ที่มา: Arbeláez, Maire, Fowlkes & Malik, "Contour Detection and Hierarchical Image Segmentation", IEEE TPAMI 33(5), 2011
 ดาวน์โหลด: <https://www2.eecs.berkeley.edu/Research/Projects/CS/vision/grouping/resources.html>
 
-ภาพไม่ได้อยู่ใน repo (ไฟล์ใหญ่ และเป็นลิขสิทธิ์ของเจ้าของ dataset) ให้ดาวน์โหลดแล้ววางตามนี้
+ภาพทั้ง 500 ภาพ (ประมาณ 40 MB) รวมอยู่ใน repo แล้ว จัดโฟลเดอร์ตามนี้ ลิขสิทธิ์ของภาพเป็นของเจ้าของ dataset ถ้าต้องการดาวน์โหลดชุดข้อมูลต้นฉบับเอง ให้ใช้ลิงก์ด้านบน
 
 ```
 data/images/train/*.jpg   (200 ภาพ)
@@ -79,7 +79,7 @@ python demo/app.py          # เปิด http://127.0.0.1:8765 ให้อั
 
 ฟอนต์ Sarabun และ IBM Plex Mono อยู่ใน `demo/static/fonts` (SIL Open Font License) เดโมจึงใช้งานได้แม้ไม่มีอินเทอร์เน็ต
 
-ภาพตัวอย่างในเดโมมาจาก `data/images` (ถ้ายังไม่ได้วาง BSDS500 ก็อัปโหลดภาพเองได้)
+ภาพตัวอย่างในเดโมมาจาก `data/images` (ถ้าไม่มีโฟลเดอร์นี้ ก็อัปโหลดภาพเองได้)
 
 ## ใช้ซ่อนข้อความด้วยโค้ด
 
@@ -113,9 +113,12 @@ src/svdmark/
   attacks.py     Attack: Gaussian noise, JPEG, crop
   metrics.py     MSE, RMS, PSNR, NCC, BER, AUC (ใช้วัดว่า detector แยกภาพได้ดีแค่ไหน)
   data.py        โหลดภาพ, แปลง grayscale, crop, ชุด pilot / eval
+data/images/      ภาพ BSDS500 ทั้ง 500 ภาพ (train / val / test)
+examples/        สคริปต์ตัวอย่างที่คำนวณซ้ำตัวอย่างมือในรายงานบทที่ 4 ด้วยโค้ดของโปรเจกต์ (ดู examples/README.md)
 tests/           เทสต์ (ตัวอย่างคำนวณมือ, encode แล้ว decode กลับ, ภาพจริง, ตัวเลขผลการทดลอง, เดโมผ่าน web server จริง)
 experiments/     สคริปต์การทดลอง (ดูตารางด้านบน)
 results/         CSV, กราฟ, ตาราง, findings.md, pilot_decisions.md
+report/          รายงานฉบับสมบูรณ์ (report.docx และ report.pdf)
 notebooks/       00 ภาพรวม dataset · 01 EDA ของ pixel และ SVD · 02 สาธิตการซ่อนบิตช่วงแรก
 demo/            เดโม (app.py = web server, core.py = logic, static/index.html = หน้าเว็บ, test_cases.json)
 pyproject.toml   ข้อมูล package, การตั้งค่า pytest และ ruff
