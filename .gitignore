@@ -8,3 +8,6 @@ logs/
 .coverage
 *.egg-info/
 build/
+
+# demo test log (written at runtime)
+demo/demo_log.csv
