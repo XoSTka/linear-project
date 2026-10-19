@@ -1,4 +1,4 @@
-"""Demo app: hide a text message in a photo, and watermark a photo, using the project's real code.
+"""Behind the Images demo app: hide a text message in a photo, and watermark a photo, using the project's real code.
 
     python demo/app.py            # opens http://127.0.0.1:8765 in your browser
     python demo/app.py --port 9000 --no-browser

@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>svdmark — ซ่อนข้อความและ watermark ในรูปด้วย SVD</title>
+<title>Behind the Images — ซ่อนข้อความและ watermark ในภาพด้วย SVD</title>
 <style>
 /* fonts are bundled in static/fonts so the demo also works without internet (SIL OFL, see LICENSE files) */
 @font-face{font-family:Sarabun;font-weight:400;src:url(/static/fonts/sarabun-thai-400-normal.woff2) format("woff2");unicode-range:U+0E01-0E5B,U+200C-200D,U+25CC}
@@ -286,26 +286,26 @@ nav.tabs button:hover{color:var(--ink)}
 <header class="top">
   <div class="brand">
     <svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true"><rect x="1" y="1" width="16" height="16" fill="none" stroke="#18181B" stroke-width="1.5"/><rect x="5" y="5" width="4" height="4" fill="#2563EB"/><rect x="9" y="9" width="4" height="4" fill="#EA580C"/></svg>
-    svdmark
+    Behind the Images
   </div>
-  <nav class="tabs" role="tablist" aria-label="หน้า">
-    <button role="tab" data-page="stego" aria-selected="true">ซ่อนข้อความ</button>
+  <nav class="tabs" role="tablist" aria-label="เมนูหลัก">
+    <button role="tab" data-page="stego" aria-selected="true">Steganography</button>
     <button role="tab" data-page="wm" aria-selected="false">Watermark</button>
-    <button role="tab" data-page="tests" aria-selected="false">ชุดทดสอบ</button>
-    <button role="tab" data-page="how" aria-selected="false">วิธีทำงาน</button>
+    <button role="tab" data-page="tests" aria-selected="false">Test cases</button>
+    <button role="tab" data-page="how" aria-selected="false">How it works</button>
   </nav>
   <div class="host" id="host"></div>
 </header>
 
 <!-- ======================================================================= STEGO -->
 <section id="page-stego">
-  <div class="intro"><b>ซ่อนข้อความลับไว้ในรูป</b> แล้วให้อีกคนอ่านกลับด้วย key เดียวกัน · อยากพิสูจน์ว่าเป็นเจ้าของรูป ไปที่แท็บ <a href="#" data-goto="wm">Watermark</a></div>
+  <div class="intro"><b>ซ่อนข้อความลับไว้ในภาพ</b> แล้วให้ผู้รับ decode กลับด้วย key เดียวกัน · ถ้าต้องการพิสูจน์ความเป็นเจ้าของภาพ ให้ไปที่แท็บ <a href="#" data-goto="wm">Watermark</a></div>
   <div class="tool">
-    <aside class="panel left" aria-label="ผู้ส่ง">
-      <h2><span class="step s1">1</span>ผู้ส่ง</h2>
+    <aside class="panel left" aria-label="Sender">
+      <h2><span class="step s1">1</span>Sender</h2>
       <div class="body">
         <div>
-          <label class="f" for="s-src">รูป</label>
+          <label class="f" for="s-src">ภาพ</label>
           <div class="row">
             <select id="s-src" data-src></select>
             <label class="btn sec" style="display:inline-flex;align-items:center;flex:none">Upload<input type="file" accept="image/*" data-upload hidden></label>
@@ -320,10 +320,10 @@ nav.tabs button:hover{color:var(--ink)}
           </div>
           <textarea id="s-msg">นัดบ่ายสาม ตึก 12</textarea>
           <div class="capbar" id="s-capbar"><div></div></div>
-          <div class="hint">อักษรไทย 3 bytes · อังกฤษ 1 byte · <a href="#" id="s-short">ข้อความสั้น</a> · <a href="#" id="s-long">ข้อความยาว</a></div>
+          <div class="hint">ตัวอักษรไทย 3 bytes · อังกฤษ 1 byte · ตัวอย่าง: <a href="#" id="s-short">ข้อความสั้น</a> · <a href="#" id="s-long">ข้อความยาว</a></div>
         </div>
         <div>
-          <label class="f" for="s-key1">Key <small>(ไม่ใส่ก็ได้)</small></label>
+          <label class="f" for="s-key1">Key <small>(ไม่บังคับ)</small></label>
           <input type="text" id="s-key1" class="mono-in" value="kmitl" autocomplete="off">
         </div>
         <div>
@@ -336,59 +336,59 @@ nav.tabs button:hover{color:var(--ink)}
           <div class="hint" id="s-modedesc" style="color:var(--ink2)"></div>
           <div class="hint mono" id="s-modeinfo"></div>
         </div>
-        <label class="check"><input type="checkbox" id="s-ecc"><span>Hamming(7,4) ECC<span class="hint" style="display:block;margin:0">ช่วยซ่อมข้อความที่เสียเล็กน้อย แต่ซ่อนได้สั้นลง (เหลือ 4/7)</span></span></label>
+        <label class="check"><input type="checkbox" id="s-ecc"><span>Hamming(7,4) ECC<span class="hint" style="display:block;margin:0">แก้บิตที่ผิดเล็กน้อยได้ แต่ capacity ลดเหลือ 4/7</span></span></label>
         <button class="btn" id="s-encode" disabled>Encode</button>
         <a class="btn sec" id="s-download" download="stego.png" href="#" aria-disabled="true">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v11M7 10l5 5 5-5M5 20h14"/></svg>
-          ดาวน์โหลดรูปที่ซ่อนแล้ว (PNG)
+          ดาวน์โหลดภาพ (PNG)
         </a>
         <div class="err" id="s-err" hidden></div>
       </div>
     </aside>
 
     <section class="stage" aria-label="ภาพ">
-      <div class="canvas"><div class="empty" id="s-empty">กำลังโหลดรูป…</div><div class="compare" id="s-compare" hidden></div></div>
+      <div class="canvas"><div class="empty" id="s-empty">กำลังโหลดภาพ…</div><div class="compare" id="s-compare" hidden></div></div>
       <div class="stagebar">
-        <div class="views" role="group" aria-label="ภาพด้านขวาของเส้นแบ่ง" id="s-views">
-          <button type="button" data-view="stego" aria-pressed="true" disabled>รูปที่ซ่อนแล้ว</button>
-          <button type="button" data-view="diff" aria-pressed="false" disabled>จุดที่ถูกแก้ ×20</button>
-          <button type="button" data-view="attacked" aria-pressed="false" disabled>หลัง attack</button>
+        <div class="views" role="group" aria-label="ภาพที่แสดงด้านขวาของเส้นแบ่ง" id="s-views">
+          <button type="button" data-view="stego" aria-pressed="true" disabled>Stego image</button>
+          <button type="button" data-view="diff" aria-pressed="false" disabled>Difference ×20</button>
+          <button type="button" data-view="attacked" aria-pressed="false" disabled>After attack</button>
         </div>
-        <div class="views" role="group" aria-label="วิธีเทียบรูป" data-layout-for="s-compare">
-          <button type="button" data-layout="slider" aria-pressed="true">ลากเทียบ</button>
-          <button type="button" data-layout="side" aria-pressed="false">วางคู่กัน</button>
+        <div class="views" role="group" aria-label="รูปแบบการเทียบภาพ" data-layout-for="s-compare">
+          <button type="button" data-layout="slider" aria-pressed="true">Slider</button>
+          <button type="button" data-layout="side" aria-pressed="false">Side by side</button>
         </div>
-        <button type="button" class="zoombtn" data-zoom="s-compare"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4M11 8v6M8 11h6"/></svg>ขยายดู</button>
+        <button type="button" class="zoombtn" data-zoom="s-compare"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4M11 8v6M8 11h6"/></svg>Zoom</button>
         <span class="stats" id="s-stats"></span>
       </div>
     </section>
 
-    <aside class="panel right" aria-label="ระหว่างทางและผู้รับ">
-      <h2><span class="step s2">2</span>ระหว่างทาง</h2>
+    <aside class="panel right" aria-label="Channel และ Receiver">
+      <h2><span class="step s2">2</span>Channel</h2>
       <div class="body">
         <div>
-          <label class="f" for="s-attack">จำลองความเสียหายระหว่างส่ง (attack)</label>
+          <label class="f" for="s-attack">จำลองการเปลี่ยนแปลงของภาพระหว่างส่ง (attack)</label>
           <select id="s-attack" class="mono-in attack-sel" data-attacks></select>
-          <p class="hint" style="color:var(--ink2)">ส่งเป็น "รูปภาพ" ใน LINE / Facebook รูปจะถูกบีบอัด (ประมาณ JPEG Q90): Robust และ Balanced มักรอด · Capacity เสียง่ายกว่า · ส่งเป็น "ไฟล์" PNG รอดแน่นอน</p>
+          <p class="hint" style="color:var(--ink2)">ถ้าส่งเป็น "รูปภาพ" ใน LINE หรือ Facebook ภาพจะถูก compress (ประมาณ JPEG Q90) โดย Robust และ Balanced มักยังอ่านกลับได้ ส่วน Capacity เสียหายง่ายกว่า · ถ้าส่งเป็น "ไฟล์" PNG ภาพจะไม่เปลี่ยน</p>
         </div>
       </div>
-      <h2><span class="step s3">3</span>ผู้รับ</h2>
+      <h2><span class="step s3">3</span>Receiver</h2>
       <div class="body">
         <div>
-          <label class="f" for="s-key2">Key ของผู้รับ</label>
+          <label class="f" for="s-key2">Key ของ Receiver</label>
           <input type="text" id="s-key2" class="mono-in" value="kmitl" autocomplete="off">
-          <p class="hint">Mode ใช้ตามผู้ส่ง (<span id="s-mode2">Balanced</span>) · ลองพิมพ์ key ผิดสักตัวดู</p>
+          <p class="hint">ใช้ mode เดียวกับ Sender (<span id="s-mode2">Balanced</span>) · ลองใส่ key ผิดสักตัวเพื่อดูผล</p>
         </div>
-        <button class="btn" id="s-decode" disabled>Decode รูปที่เพิ่งซ่อน</button>
-        <label class="btn sec" style="display:inline-flex;align-items:center;justify-content:center">อัปโหลดรูปที่ได้รับมา แล้ว Decode<input type="file" accept="image/*" id="s-recv" hidden></label>
-        <button class="btn sec" id="s-decode-cover" disabled>ลองอ่านจากรูปที่ไม่เคยซ่อน</button>
+        <button class="btn" id="s-decode" disabled>Decode ภาพที่เพิ่ง encode</button>
+        <label class="btn sec" style="display:inline-flex;align-items:center;justify-content:center">Upload ภาพที่ได้รับ แล้ว Decode<input type="file" accept="image/*" id="s-recv" hidden></label>
+        <button class="btn sec" id="s-decode-cover" disabled>Decode จากภาพต้นฉบับ (ไม่เคย encode)</button>
         <div id="s-result"></div>
         <div>
-          <div style="font-weight:600;margin-bottom:4px">ผลที่เป็นไปได้</div>
+          <div style="font-weight:600;margin-bottom:4px">ผลลัพธ์ที่เป็นไปได้</div>
           <dl class="legend">
-            <dt>ok</dt><dd>ได้ข้อความเดิมครบ</dd>
-            <dt>damaged</dt><dd>เจอข้อความ แต่ CRC ไม่ผ่าน (บิตเสีย)</dd>
-            <dt>no_message</dt><dd>ไม่มีข้อความ หรือ key ไม่ตรง (key ผิดแม้ตัวเดียว ตำแหน่งที่อ่านจะผิดทั้งหมด)</dd>
+            <dt>ok</dt><dd>ได้ข้อความเดิมครบถ้วน</dd>
+            <dt>damaged</dt><dd>พบข้อความ แต่ CRC ไม่ผ่าน (มีบิตเสียหาย)</dd>
+            <dt>no_message</dt><dd>ไม่มีข้อความ หรือ key ไม่ตรง (ผิดแม้ตัวเดียว ตำแหน่ง block ที่อ่านจะผิดทั้งหมด)</dd>
           </dl>
         </div>
       </div>
@@ -398,13 +398,13 @@ nav.tabs button:hover{color:var(--ink)}
 
 <!-- ======================================================================= WATERMARK -->
 <section id="page-wm" hidden>
-  <div class="intro"><b>ฝังโลโก้ลงในรูปแบบมองไม่เห็น</b> แล้วตรวจภายหลังว่ารูปไหนเป็นของเรา</div>
+  <div class="intro"><b>ฝัง logo ลงในภาพโดยมองไม่เห็น</b> แล้วตรวจภายหลังว่าภาพไหนมี watermark ของเรา</div>
   <div class="tool">
     <aside class="panel left" aria-label="ฝัง watermark">
       <h2><span class="step s1">1</span>ฝัง watermark</h2>
       <div class="body">
         <div>
-          <label class="f" for="w-src">รูป</label>
+          <label class="f" for="w-src">ภาพ</label>
           <div class="row">
             <select id="w-src" data-src></select>
             <label class="btn sec" style="display:inline-flex;align-items:center;flex:none">Upload<input type="file" accept="image/*" data-upload hidden></label>
@@ -415,67 +415,67 @@ nav.tabs button:hover{color:var(--ink)}
         <div>
           <span class="f" id="w-logo-label">Logo</span>
           <div class="seg two" role="group" aria-labelledby="w-logo-label" id="w-logo-kind">
-            <button type="button" data-kind="text" aria-pressed="true">พิมพ์ตัวอักษร</button>
-            <button type="button" data-kind="image" aria-pressed="false">ใช้รูปของฉัน</button>
+            <button type="button" data-kind="text" aria-pressed="true">พิมพ์ข้อความ</button>
+            <button type="button" data-kind="image" aria-pressed="false">ใช้ภาพของฉัน</button>
           </div>
         </div>
         <div style="display:flex;gap:10px;align-items:flex-end">
           <div style="flex:1;min-width:0" id="w-logo-text-box">
-            <label class="f" for="w-logo">ข้อความ <small>(A–Z, 0–9, ไม่เกิน 8 ตัว)</small></label>
+            <label class="f" for="w-logo">ข้อความ <small>(A–Z, 0–9 ไม่เกิน 8 ตัวอักษร)</small></label>
             <input type="text" id="w-logo" class="mono-in" value="LA2026" maxlength="8" autocomplete="off">
           </div>
           <div style="flex:1;min-width:0" id="w-logo-file-box" hidden>
-            <label class="btn sec" style="display:flex;align-items:center;justify-content:center">เลือกรูปโลโก้<input type="file" accept="image/*" id="w-logo-file" hidden></label>
-            <div class="hint" id="w-logo-file-note">โลโก้พื้นใสหรือพื้นสีเรียบได้ผลดีที่สุด รูปจะถูกแปลงเป็นขาวดำ</div>
+            <label class="btn sec" style="display:flex;align-items:center;justify-content:center">เลือกภาพ logo<input type="file" accept="image/*" id="w-logo-file" hidden></label>
+            <div class="hint" id="w-logo-file-note">logo ที่มีพื้นหลังโปร่งใสหรือสีเรียบจะได้ผลดีที่สุด ภาพจะถูกแปลงเป็น black & white</div>
           </div>
           <img id="w-logo-img" alt="Logo ที่จะฝัง" width="58" height="58" style="border:1px solid var(--line);image-rendering:pixelated;background:#000;cursor:zoom-in" hidden>
         </div>
         <div>
           <div style="display:flex;justify-content:space-between;align-items:baseline">
-            <label class="f" for="w-alpha" style="margin:0">α (ความแรง)</label>
+            <label class="f" for="w-alpha" style="margin:0">α (strength)</label>
             <span class="mono" style="font-weight:600" id="w-alpha-v">16</span>
           </div>
           <input type="range" id="w-alpha" min="2" max="32" step="1" value="16" style="width:100%;accent-color:#18181B">
-          <table class="alpha-table" aria-label="PSNR เฉลี่ยจากการทดลอง">
+          <table class="alpha-table" aria-label="ค่า PSNR เฉลี่ยจากการทดลอง">
             <tr><td>α</td><td data-a="8">8</td><td data-a="12">12</td><td data-a="16">16</td><td data-a="24">24</td></tr>
             <tr><td>PSNR</td><td data-a="8">49.3</td><td data-a="12">44.1</td><td data-a="16">40.3</td><td data-a="24">34.9</td></tr>
           </table>
-          <p class="hint">PSNR เฉลี่ย 400 รูป (dB) · 40 dB ขึ้นไป ตาแยกไม่ออก</p>
+          <p class="hint">PSNR เฉลี่ยจาก 400 ภาพ (dB) · ตั้งแต่ 40 dB ขึ้นไป สายตามนุษย์แยกความต่างไม่ออก</p>
         </div>
         <button class="btn" id="w-embed" disabled>Embed</button>
-        <a class="btn sec" id="w-download" download="watermarked.png" href="#" aria-disabled="true">ดาวน์โหลดรูปที่ฝังแล้ว (PNG)</a>
-        <p class="hint">ระบบจำข้อมูลที่ใช้ตรวจ (key) ไว้ให้ จนกว่าจะปิดโปรแกรม</p>
+        <a class="btn sec" id="w-download" download="watermarked.png" href="#" aria-disabled="true">ดาวน์โหลดภาพ (PNG)</a>
+        <p class="hint">เซิร์ฟเวอร์เก็บ key สำหรับตรวจ watermark ไว้ให้ จนกว่าจะรีสตาร์ตโปรแกรม</p>
         <div class="err" id="w-err" hidden></div>
       </div>
     </aside>
 
     <section class="stage" aria-label="ภาพ">
-      <div class="canvas"><div class="empty" id="w-empty">กำลังโหลดรูป…</div><div class="compare" id="w-compare" hidden></div></div>
+      <div class="canvas"><div class="empty" id="w-empty">กำลังโหลดภาพ…</div><div class="compare" id="w-compare" hidden></div></div>
       <div class="stagebar">
-        <div class="views" role="group" aria-label="ภาพที่จะดู" id="w-views">
-          <button type="button" data-view="marked" aria-pressed="true" disabled>รูปที่ฝังแล้ว</button>
-          <button type="button" data-view="diff" aria-pressed="false" disabled>จุดที่ถูกแก้ ×20</button>
-          <button type="button" data-view="attacked" aria-pressed="false" disabled>หลัง attack</button>
-          <button type="button" data-view="logos" aria-pressed="false" disabled>เทียบโลโก้</button>
+        <div class="views" role="group" aria-label="ภาพที่แสดง" id="w-views">
+          <button type="button" data-view="marked" aria-pressed="true" disabled>Watermarked</button>
+          <button type="button" data-view="diff" aria-pressed="false" disabled>Difference ×20</button>
+          <button type="button" data-view="attacked" aria-pressed="false" disabled>After attack</button>
+          <button type="button" data-view="logos" aria-pressed="false" disabled>Compare logos</button>
         </div>
-        <div class="views" role="group" aria-label="วิธีเทียบรูป" data-layout-for="w-compare">
-          <button type="button" data-layout="slider" aria-pressed="true">ลากเทียบ</button>
-          <button type="button" data-layout="side" aria-pressed="false">วางคู่กัน</button>
+        <div class="views" role="group" aria-label="รูปแบบการเทียบภาพ" data-layout-for="w-compare">
+          <button type="button" data-layout="slider" aria-pressed="true">Slider</button>
+          <button type="button" data-layout="side" aria-pressed="false">Side by side</button>
         </div>
-        <button type="button" class="zoombtn" data-zoom="w-compare"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4M11 8v6M8 11h6"/></svg>ขยายดู</button>
+        <button type="button" class="zoombtn" data-zoom="w-compare"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4M11 8v6M8 11h6"/></svg>Zoom</button>
         <span class="stats" id="w-stats"></span>
       </div>
     </section>
 
     <aside class="panel right wide" aria-label="ตรวจ watermark">
-      <h2><span class="step s3">2</span>ตรวจว่ารูปไหนมี watermark</h2>
+      <h2><span class="step s3">2</span>ตรวจว่าภาพไหนมี watermark</h2>
       <div class="body">
         <div>
-          <label class="f" for="w-attack">จำลองความเสียหายก่อนตรวจ (attack)</label>
+          <label class="f" for="w-attack">จำลองการเปลี่ยนแปลงของภาพก่อนตรวจ (attack)</label>
           <select id="w-attack" class="mono-in attack-sel" data-attacks></select>
-          <p class="hint">ทำกับทั้งสองรูปเหมือนกัน แล้วตรวจ</p>
+          <p class="hint">ใช้ attack เดียวกันกับทั้งสองภาพ แล้วจึงตรวจ</p>
         </div>
-        <button class="btn" id="w-check" disabled>ตรวจทั้งสองรูป</button>
+        <button class="btn" id="w-check" disabled>ตรวจทั้งสองภาพ</button>
         <div id="w-result"></div>
       </div>
     </aside>
@@ -487,28 +487,28 @@ nav.tabs button:hover{color:var(--ink)}
   <div class="tp">
     <div class="tp-head">
       <div>
-        <h1>ชุดทดสอบ</h1>
-        <p>20 กรณีที่ตั้งค่าไว้แล้ว เลือกกรณีทางซ้าย กด <b>Run</b> ระบบจะซ่อน → attack → อ่านกลับ และเช็คกับผลที่คาดให้ แล้วคนที่ดูผลกดยืนยัน</p>
+        <h1>Test cases</h1>
+        <p>มี 20 test case ที่ตั้งค่าไว้แล้ว เลือก case จากรายการทางซ้ายแล้วกด <b>Run</b> ระบบจะ encode → attack → decode และเทียบกับผลที่คาดไว้โดยอัตโนมัติ จากนั้นให้ผู้ทดสอบดูผลและกดยืนยันว่าตรงหรือไม่</p>
       </div>
       <div class="tp-actions">
-        <label for="t-name">ชื่อผู้ลอง</label>
-        <input type="text" id="t-name" placeholder="ไม่ใส่ก็ได้" autocomplete="off">
+        <label for="t-name">ชื่อผู้ทดสอบ</label>
+        <input type="text" id="t-name" placeholder="ไม่บังคับ" autocomplete="off">
         <a class="btn sec" href="/api/log.csv" download="demo_log.csv">Export CSV</a>
         <button class="btn" id="t-runall">Run all</button>
       </div>
     </div>
 
     <div class="tp-images">
-      <span class="tp-label">รูปที่ใช้ทดสอบ</span>
+      <span class="tp-label">ภาพที่ใช้ทดสอบ</span>
       <div class="tp-thumbs" id="t-thumbs"></div>
       <label class="btn sec" style="display:inline-flex;align-items:center">Upload<input type="file" accept="image/*" id="t-upload" hidden></label>
-      <span class="tp-imgnote" id="t-imgnote">ใช้รูปที่ตั้งไว้ในแต่ละกรณี</span>
+      <span class="tp-imgnote" id="t-imgnote">ใช้ภาพตามที่กำหนดไว้ในแต่ละ case</span>
     </div>
 
     <div class="tp-progress" id="t-sum"></div>
 
     <div class="tp-body">
-      <nav class="tp-list" id="t-list" aria-label="รายการกรณีทดสอบ"></nav>
+      <nav class="tp-list" id="t-list" aria-label="รายการ test case"></nav>
       <section class="tp-detail" id="t-detail" aria-live="polite"></section>
     </div>
   </div>
@@ -517,45 +517,45 @@ nav.tabs button:hover{color:var(--ink)}
 <!-- ======================================================================= HOW -->
 <section id="page-how" hidden>
   <article class="how">
-    <h1>วิธีทำงาน</h1>
-    <p>ทุกปุ่มในแอปเรียกโค้ดจริงของโปรเจกต์ (<span class="mono">src/svdmark</span>) และทำงานบนเครื่องนี้ทั้งหมด รูปไม่ถูกส่งไปไหน</p>
-    <h2>ซ่อนข้อความ (QIM บน σ₁ ของแต่ละบล็อก)</h2>
+    <h1>How it works</h1>
+    <p>ทุกปุ่มในแอปเรียกใช้โค้ดจริงของโปรเจกต์ (<span class="mono">src/svdmark</span>) ภาพที่อัปโหลดจะถูกส่งไปประมวลผลบนเซิร์ฟเวอร์ของเดโมนี้ และไม่ถูกบันทึกลงดิสก์</p>
+    <h2>Steganography (QIM บน σ₁ ของแต่ละ block)</h2>
     <ol>
-      <li>แปลงรูปเป็นภาพเทา แล้วแบ่งเป็นบล็อก b×b (Balanced = 8×8) แต่ละบล็อกเก็บได้ 1 บิต</li>
-      <li>ทำ SVD ของบล็อก A = UΣVᵀ แล้วดูค่า σ₁ (singular value ตัวใหญ่สุด ≈ b × ความสว่างเฉลี่ยของบล็อก)</li>
-      <li>แบ่งแกน σ เป็นช่องกว้าง Δ ช่องเลขคู่ = บิต 0 ช่องเลขคี่ = บิต 1 แล้วย้าย σ₁ ไปกลางช่องที่ตรงกับบิตที่ต้องการ σ₁ จึงเพี้ยนได้ ±Δ/2 โดยยังอ่านบิตเดิมได้</li>
-      <li>สร้างบล็อกกลับ ปัดเป็นจำนวนเต็ม 0–255 แล้วอ่านซ้ำทันที (closed-loop) ต้องได้บิตถูกและห่างขอบช่องอย่างน้อย Δ/4</li>
-      <li>ข้อความเก็บเป็น 16 บิตความยาว + CRC-16 + เนื้อความ UTF-8 ผู้รับใช้ CRC ตรวจว่าข้อความครบ (ok / damaged / no_message)</li>
-      <li>Key (ถ้าใส่) ผ่าน PBKDF2-HMAC-SHA256 แล้วเลื่อนเส้นแบ่งช่องของแต่ละบล็อกไปคนละระยะ คนที่ไม่มี key จึงอ่านไม่ได้</li>
-      <li>Hamming(7,4) ECC (ถ้าเปิด) คูณข้อมูล 4 บิตด้วยเมทริกซ์ G (mod 2) ได้ 7 บิต ผู้รับคำนวณ syndrome s = Hr แล้วแก้บิตผิดได้ 1 บิตต่อกลุ่ม</li>
+      <li>แปลงภาพเป็น grayscale แล้วแบ่งเป็น block ขนาด b×b (Balanced ใช้ 8×8) แต่ละ block เก็บได้ 1 bit</li>
+      <li>ทำ SVD ของ block A = UΣVᵀ แล้วดูค่า σ₁ (singular value ตัวที่ใหญ่ที่สุด ≈ b × ความสว่างเฉลี่ยของ block)</li>
+      <li>แบ่งแกน σ เป็นช่วง (interval) กว้าง Δ โดยช่วงเลขคู่แทนบิต 0 และช่วงเลขคี่แทนบิต 1 แล้วย้าย σ₁ ไปที่กลางช่วงที่ตรงกับบิตที่ต้องการ ทำให้ σ₁ คลาดเคลื่อนได้ถึง ±Δ/2 โดยยังอ่านบิตเดิมได้</li>
+      <li>สร้าง block กลับ ปัดเป็นจำนวนเต็ม 0–255 แล้วอ่านซ้ำทันที (closed-loop) บิตที่อ่านได้ต้องถูกต้องและอยู่ห่างจากขอบช่วงอย่างน้อย Δ/4</li>
+      <li>ข้อความถูกจัดเก็บเป็น length 16 bits + CRC-16 + payload แบบ UTF-8 ฝั่งผู้รับใช้ CRC ตรวจว่าข้อความครบหรือไม่ (ok / damaged / no_message)</li>
+      <li>ถ้าใส่ key จะผ่าน PBKDF2-HMAC-SHA256 แล้วใช้เลื่อนขอบช่วงของแต่ละ block ไปคนละระยะ ผู้ที่ไม่มี key จึงอ่านบิตไม่ได้</li>
+      <li>Hamming(7,4) ECC (ถ้าเปิด) คูณข้อมูล 4 bits ด้วยเมทริกซ์ G (mod 2) ได้ 7 bits ฝั่งผู้รับคำนวณ syndrome s = Hr แล้วแก้บิตที่ผิดได้ 1 bit ต่อกลุ่ม</li>
     </ol>
     <h2>Watermark (Liu &amp; Tan, 2002)</h2>
     <ol>
-      <li>SVD ของทั้งรูป A = UΣVᵀ แล้วบวกโลโก้ W เข้าไป: D = Σ + αW</li>
-      <li>SVD ของ D = U<sub>w</sub>Σ<sub>w</sub>V<sub>w</sub>ᵀ แล้วสร้างรูปใหม่ A<sub>w</sub> = UΣ<sub>w</sub>Vᵀ</li>
-      <li>ตอนตรวจ หา Σ* ของรูปที่ได้รับ แล้วดึงโลโก้ W* = (U<sub>w</sub>Σ*V<sub>w</sub>ᵀ − Σ)/α และวัด NCC กับโลโก้จริง</li>
-      <li>ปัญหา: key (U<sub>w</sub>, V<sub>w</sub>) จำหน้าตาโลโก้ไว้เกือบทั้งหมด รูปที่ไม่เคยฝังก็ได้ NCC สูง เราจึงเพิ่ม <b>shift score</b> = cos(σ* − σ, σ<sub>w</sub> − σ) ซึ่งเป็น 0 สำหรับรูปที่ไม่เคยฝัง</li>
+      <li>ทำ SVD ของทั้งภาพ A = UΣVᵀ แล้วบวก logo W เข้าไป: D = Σ + αW</li>
+      <li>ทำ SVD ของ D = U<sub>w</sub>Σ<sub>w</sub>V<sub>w</sub>ᵀ แล้วสร้าง watermarked image A<sub>w</sub> = UΣ<sub>w</sub>Vᵀ</li>
+      <li>ตอนตรวจ คำนวณ Σ* ของภาพที่ได้รับ แล้วดึง logo W* = (U<sub>w</sub>Σ*V<sub>w</sub>ᵀ − Σ)/α ออกมา และวัด NCC เทียบกับ logo จริง</li>
+      <li>ปัญหาคือ key (U<sub>w</sub>, V<sub>w</sub>) เก็บรูปร่างของ logo ไว้เกือบทั้งหมด ภาพที่ไม่เคยฝัง watermark จึงได้ NCC สูงเช่นกัน เราจึงเพิ่ม <b>shift score</b> = cos(σ* − σ, σ<sub>w</sub> − σ) ซึ่งมีค่าเป็น 0 สำหรับภาพที่ไม่เคยฝัง</li>
     </ol>
     <h2>ข้อจำกัดที่วัดได้จริง</h2>
     <ul>
-      <li>Machine learning detector อย่างง่ายจับรูปที่ซ่อนข้อความเต็มความจุได้ (AUC ≈ 0.99) แม้ใส่ key เพราะเกิดรอยที่ขอบบล็อก</li>
-      <li>Rotate 0.5° ทำให้ข้อความหายทุก mode เพราะตารางบล็อกเลื่อน ส่วน watermark ทนการหมุนเล็กน้อยได้</li>
-      <li>Blur ทำให้ shift score ติดลบทั้งรูปที่ฝังและไม่เคยฝัง เกณฑ์ 0.8 / 0.3 ในแอปจึงใช้ตัดสินไม่ได้หลังเบลอ</li>
+      <li>machine learning detector อย่างง่ายจับภาพที่ซ่อนข้อความเต็ม capacity ได้ (AUC ≈ 0.99) แม้จะใส่ key เพราะเกิดรอยต่อที่ขอบ block</li>
+      <li>Rotate 0.5° ทำให้ข้อความหายในทุก mode เพราะ block grid เลื่อนไป ส่วน watermark ทนการหมุนเล็กน้อยได้</li>
+      <li>Blur ทำให้ shift score ติดลบทั้งภาพที่ฝังและภาพที่ไม่เคยฝัง เกณฑ์ 0.8 / 0.3 ในแอปจึงใช้ตัดสินหลัง blur ไม่ได้</li>
     </ul>
-    <p class="hint">ตัวเลขทั้งหมดอยู่ใน results/findings.md</p>
+    <p class="hint">ผลการทดลองทั้งหมดอยู่ใน results/findings.md</p>
   </article>
 </section>
 
-<div class="lb" id="lb" role="dialog" aria-modal="true" aria-label="ขยายดูรูป" hidden>
+<div class="lb" id="lb" role="dialog" aria-modal="true" aria-label="Zoom" hidden>
   <div class="lb-bar">
-    <span class="t" id="lb-title">ขยายดูรูป</span>
-    <span class="hint">scroll = ซูม · ลาก = เลื่อน · ดับเบิลคลิก = ซูมเข้า</span>
-    <button type="button" data-z="out" aria-label="ซูมออก">−</button>
+    <span class="t" id="lb-title">Zoom</span>
+    <span class="hint">scroll = zoom · ลาก = pan · ดับเบิลคลิก = zoom in</span>
+    <button type="button" data-z="out" aria-label="Zoom out">−</button>
     <span class="z" id="lb-z">100%</span>
-    <button type="button" data-z="in" aria-label="ซูมเข้า">+</button>
-    <button type="button" data-z="fit">พอดีจอ</button>
+    <button type="button" data-z="in" aria-label="Zoom in">+</button>
+    <button type="button" data-z="fit">Fit</button>
     <button type="button" data-z="one">1:1</button>
-    <button type="button" data-z="close" aria-label="ปิด">✕ ปิด</button>
+    <button type="button" data-z="close" aria-label="Close">✕ Close</button>
   </div>
   <div class="lb-panes" id="lb-panes"></div>
 </div>
@@ -565,18 +565,18 @@ nav.tabs button:hover{color:var(--ink)}
 const $ = s => document.querySelector(s), $$ = s => [...document.querySelectorAll(s)];
 const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const SHORT = 'นัดบ่ายสาม ตึก 12';
-const LONG = 'ข้อความนี้ยาวเกือบเต็มความจุของรูปในโหมดสมดุลเพื่อทดสอบว่าระบบยังซ่อนและอ่านกลับได้ครบทุกตัวอักษร';
+const LONG = 'ข้อความนี้ยาวเกือบเต็ม capacity ของภาพในโหมด Balanced เพื่อทดสอบว่าระบบยัง encode และ decode กลับได้ครบถ้วนทุกตัวอักษร';
 const ATTACKS = [
   ['none', null, 'none — ส่งเป็นไฟล์ PNG'],
-  ['jpeg', 95, 'JPEG Q95'], ['jpeg', 90, 'JPEG Q90 — ประมาณส่งผ่าน LINE'], ['jpeg', 75, 'JPEG Q75'], ['jpeg', 50, 'JPEG Q50'],
+  ['jpeg', 95, 'JPEG Q95'], ['jpeg', 90, 'JPEG Q90 — ใกล้เคียงการส่งผ่าน LINE'], ['jpeg', 75, 'JPEG Q75'], ['jpeg', 50, 'JPEG Q50'],
   ['noise', 2, 'Gaussian noise σ=2'], ['noise', 4, 'Gaussian noise σ=4'], ['noise', 8, 'Gaussian noise σ=8'],
   ['crop', 0.1, 'Crop center 10%'], ['crop', 0.25, 'Crop center 25%'],
   ['resize', 0.75, 'Resize 75% → 100%'], ['resize', 0.5, 'Resize 50% → 100%'],
   ['blur', 0.5, 'Blur r=0.5'], ['blur', 1.0, 'Blur r=1'], ['median', 3, 'Median 3×3'],
   ['rotate', 0.5, 'Rotate 0.5°'], ['rotate', 1.0, 'Rotate 1°'],
 ];
-const MODE_DESC = {robust: 'ทนที่สุด แต่ซ่อนได้สั้น', balanced: 'ค่าแนะนำ: ทนพอดี ซ่อนได้ปานกลาง', capacity: 'ซ่อนได้ยาวที่สุด แต่เสียง่ายเมื่อรูปถูกบีบอัด'};
-const STATUS_TH = {ok: 'อ่านได้ครบ', damaged: 'ข้อความเสียหาย', no_message: 'ไม่พบข้อความ'};
+const MODE_DESC = {robust: 'ทนต่อ attack ได้ดีที่สุด แต่ capacity ต่ำ', balanced: 'ค่าแนะนำ: robustness และ capacity สมดุลกัน', capacity: 'ซ่อนข้อความได้ยาวที่สุด แต่เสียหายง่ายเมื่อภาพถูก compress'};
+const STATUS_TH = {ok: 'อ่านข้อความได้ครบ', damaged: 'ข้อความเสียหาย', no_message: 'ไม่พบข้อความ'};
 const S = {info: null, mode: 'balanced', stego: {}, wm: {}, judged: {}, auto: {}, open: null, results: {}};
 
 async function api(path, body) {
@@ -587,7 +587,7 @@ async function api(path, body) {
     const r = await fetch(path, body === undefined ? {} : {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(body)});
     return await r.json();
   } catch (e) {
-    return {error: 'ติดต่อโปรแกรมไม่ได้ (ปิดหน้าต่าง python demo/app.py ไปหรือเปล่า?) ' + e};
+    return {error: 'เชื่อมต่อเซิร์ฟเวอร์ไม่ได้ ลองรีเฟรชหน้าแล้วทำซ้ำอีกครั้ง (' + e + ')'};
   } finally {
     $('#busy').classList.remove('on');
     if (btn) { btn.classList.remove('loading'); btn.removeAttribute('aria-busy'); }
@@ -619,7 +619,7 @@ function makeCompare(box, leftSrc, leftTag, rightSrc, rightTag, pixelated) {
   box.classList.remove('side');
   const split = box._split ?? 50;
   box.innerHTML = `<img src="${leftSrc}" alt="${esc(leftTag)}"><img class="over${pixelated ? ' px' : ''}" src="${rightSrc}" alt="${esc(rightTag)}" style="clip-path:inset(0 0 0 ${split}%)">
-    <div class="line" style="left:${split}%" role="slider" tabindex="0" aria-label="เส้นแบ่งภาพ" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${split}"></div>
+    <div class="line" style="left:${split}%" role="slider" tabindex="0" aria-label="ตัวเลื่อนเทียบภาพ" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${split}"></div>
     <span class="tag l">${esc(leftTag)}</span><span class="tag r">${esc(rightTag)}</span>`;
   const over = box.querySelector('img.over'), line = box.querySelector('.line');
   const set = v => { v = Math.max(0, Math.min(100, v)); box._split = v; over.style.clipPath = `inset(0 0 0 ${v}%)`; line.style.left = v + '%'; line.setAttribute('aria-valuenow', Math.round(v)); };
@@ -642,7 +642,7 @@ const LB = {z: 1, x: 0, y: 0, w: 0, h: 0, items: []};
 function openZoom(items, title) {
   if (!items.length) return;
   LB.items = items;
-  $('#lb-title').textContent = title || 'ขยายดูรูป';
+  $('#lb-title').textContent = title || 'Zoom';
   $('#lb-panes').innerHTML = items.map(it => `<div class="lb-pane"><img src="${it.src}" alt="${esc(it.cap)}" draggable="false"><span class="cap">${esc(it.cap)}</span></div>`).join('');
   $('#lb').hidden = false; document.body.style.overflow = 'hidden';
   const img = $('#lb-panes img');
@@ -713,20 +713,20 @@ document.addEventListener('click', e => {
   if (!img) return;
   const group = img.closest('.compare, .imgs');
   const imgs = [...group.querySelectorAll('figure img')];
-  openZoom(imgs.map(i => ({src: i.src, cap: capOf(i)})), 'ขยายดูรูป · ภาพในกลุ่มเดียวกันซูมและเลื่อนพร้อมกัน');
+  openZoom(imgs.map(i => ({src: i.src, cap: capOf(i)})), 'Zoom · ภาพในกลุ่มเดียวกันซูมและเลื่อนพร้อมกัน');
 });
 $$('[data-zoom]').forEach(b => b.onclick = () => {
   const box = $('#' + b.dataset.zoom);
   const figs = box.querySelectorAll('figure img');
-  if (figs.length) openZoom([...figs].map(i => ({src: i.src, cap: capOf(i)})), 'ขยายดูรูป · ภาพทั้งหมดซูมและเลื่อนพร้อมกัน');
-  else if (box._args) openZoom([{src: box._args[0], cap: box._args[1]}, {src: box._args[2], cap: box._args[3]}], 'ขยายดูรูป · ภาพทั้งสองซูมและเลื่อนพร้อมกัน');
+  if (figs.length) openZoom([...figs].map(i => ({src: i.src, cap: capOf(i)})), 'Zoom · ภาพทั้งหมดซูมและเลื่อนพร้อมกัน');
+  else if (box._args) openZoom([{src: box._args[0], cap: box._args[1]}, {src: box._args[2], cap: box._args[3]}], 'Zoom · ภาพทั้งสองซูมและเลื่อนพร้อมกัน');
 });
 
 /* ---------------------------------------------------------------- shared: image sources */
 function fillSources() {
   $$('[data-src]').forEach(sel => {
     sel.innerHTML = S.info.samples.map((s, i) => `<option value="${i}">${esc(s.label)} (${esc(s.name)})</option>`).join('')
-      || '<option value="">ไม่พบรูปตัวอย่าง — กด Upload</option>';
+      || '<option value="">ไม่พบภาพตัวอย่าง — กด Upload</option>';
   });
   $$('[data-attacks]').forEach(sel => { sel.innerHTML = ATTACKS.map((a, i) => `<option value="${i}">${esc(a[2])}</option>`).join(''); });
 }
@@ -782,7 +782,7 @@ function resetStego() {
 function drawStego() {
   const T = S.stego, v = T.view;
   const src = v === 'diff' ? T.diff : v === 'attacked' && T.attacked ? T.attacked : T.stegoImg;
-  const tag = v === 'diff' ? 'จุดที่ถูกแก้ ×20' : v === 'attacked' ? `หลัง attack: ${T.attackLabel || 'none'}` : `รูปที่ซ่อนแล้ว · PSNR ${T.psnr} dB`;
+  const tag = v === 'diff' ? 'Difference ×20' : v === 'attacked' ? `After attack: ${T.attackLabel || 'none'}` : `Stego image · PSNR ${T.psnr} dB`;
   makeCompare($('#s-compare'), T.cover, 'Original', src, tag, v === 'diff');
   $$('#s-views button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.view === v)));
 }
@@ -791,7 +791,7 @@ $('#s-encode').onclick = async () => {
   const T = S.stego, key = $('#s-key1').value;
   const r = await api('/api/stego/embed', {cover: T.cover, text: $('#s-msg').value, key, mode: S.mode, ecc: $('#s-ecc').checked});
   if (r.error) { showErr($('#s-err'), r.error); return; }
-  showErr($('#s-err'), r.failed ? `มี ${r.failed} บล็อกที่ซ่อนไม่สำเร็จ (บิตนั้นอาจอ่านผิด)` : '');
+  showErr($('#s-err'), r.failed ? `มี ${r.failed} block ที่ฝังบิตไม่สำเร็จ (บิตเหล่านั้นอาจอ่านผิด)` : '');
   Object.assign(T, {stegoImg: r.image, diff: r.diff, psnr: r.psnr, sent: $('#s-msg').value, sentEcc: $('#s-ecc').checked, attacked: null, view: 'stego'});
   $('#s-key2').value = key;
   $('#s-stats').textContent = `PSNR ${r.psnr} dB · max |Δpixel| ${r.max_change} · ${r.bits_used} / ${r.capacity} bits`;
@@ -817,7 +817,7 @@ $('#s-decode').onclick = async () => {
   if (T.attacked) T.view = 'attacked'; else if (T.view === 'attacked') T.view = 'stego';
   drawStego();
   const extra = [['BER', `${r.wrong_bits} / ${r.bits} bits`], ['CRC-16', r.status === 'ok' ? 'pass' : 'fail'], ['attack', r.attack]];
-  if (r.ecc) extra.push(['ECC แก้ไป', `${r.corrected} bits`]);
+  if (r.ecc) extra.push(['ECC แก้ได้', `${r.corrected} bits`]);
   $('#s-result').innerHTML = resultHTML(r, extra);
 };
 $('#s-recv').onchange = () => {
@@ -825,14 +825,14 @@ $('#s-recv').onchange = () => {
   const rd = new FileReader();
   rd.onload = async () => {
     const r = await api('/api/stego/extract', {image: rd.result, key: $('#s-key2').value, mode: S.mode, ecc: $('#s-ecc').checked});
-    $('#s-result').innerHTML = resultHTML(r, [['อ่านจาก', f.name], ['mode', S.info.modes[S.mode].label]]);
+    $('#s-result').innerHTML = resultHTML(r, [['Source', f.name], ['mode', S.info.modes[S.mode].label]]);
     $('#s-recv').value = '';
   };
   rd.readAsDataURL(f);
 };
 $('#s-decode-cover').onclick = async () => {
   const r = await api('/api/stego/extract', {image: S.stego.cover, key: $('#s-key2').value, mode: S.mode, ecc: $('#s-ecc').checked});
-  $('#s-result').innerHTML = resultHTML(r, [['อ่านจาก', 'รูปต้นฉบับ (ไม่เคยซ่อน)']]);
+  $('#s-result').innerHTML = resultHTML(r, [['Source', 'ภาพต้นฉบับ (ไม่เคย encode)']]);
 };
 
 /* ---------------------------------------------------------------- watermark page */
@@ -863,18 +863,18 @@ $('#w-logo-file').onchange = () => {
   rd.onload = async () => {
     const T = S.wm;
     const r = await api('/api/wm/logo-preview', {logo_image: rd.result, k: T.k || 320});
-    if (r.error) { showErr($('#w-err'), 'เปิดรูปโลโก้ไม่ได้: ' + r.error); return; }
+    if (r.error) { showErr($('#w-err'), 'เปิดภาพ logo ไม่ได้: ' + r.error); return; }
     showErr($('#w-err'), '');
     T.logoImage = rd.result; T.logoPreview = r.logo;
     const pct = Math.round(r.ink * 100);
-    const warn = (r.ink < 0.03 || r.ink > 0.97) ? ' · แทบเป็นสีเดียวทั้งรูป ลองรูปที่ตัดกับพื้นชัดกว่านี้' : '';
-    $('#w-logo-file-note').textContent = `${f.name} → ขาวดำ ส่วนสีขาว ${pct}%${warn}`;
+    const warn = (r.ink < 0.03 || r.ink > 0.97) ? ' · ภาพเกือบเป็นสีเดียวทั้งภาพ ลองใช้ภาพที่ logo ตัดกับพื้นหลังชัดเจนกว่านี้' : '';
+    $('#w-logo-file-note').textContent = `${f.name} → black & white (พิกเซลสีขาว ${pct}%)${warn}`;
     showLogoThumb(); resetWm();
   };
   rd.readAsDataURL(f);
   $('#w-logo-file').value = '';
 };
-$('#w-logo-img').onclick = () => { const img = $('#w-logo-img'); if (!img.hidden) openZoom([{src: img.src, cap: 'โลโก้ที่จะฝัง (ขาวดำ)'}], 'โลโก้ที่จะฝัง'); };
+$('#w-logo-img').onclick = () => { const img = $('#w-logo-img'); if (!img.hidden) openZoom([{src: img.src, cap: 'Logo ที่จะฝัง (black & white)'}], 'Logo ที่จะฝัง'); };
 function resetWm() {
   const T = S.wm; Object.assign(T, {marked: null, keyId: null, diff: null, check: null, view: 'marked'});
   $('#w-result').innerHTML = ''; $('#w-check').disabled = true; $('#w-stats').textContent = '';
@@ -893,21 +893,21 @@ function drawWm() {
     const cap = (title, r) => `<b>${title}</b><span class="score">shift ${r.shift.toFixed(3)} · NCC ${r.ncc.toFixed(3)}</span><span class="ev ${r.evidence}">${EVID[r.evidence]}</span>`;
     box.classList.remove('side'); box.classList.add('logos');
     box.onpointerdown = box.onpointermove = box.onpointerup = box.onpointercancel = null;
-    box.innerHTML = `<figure><img src="${T.logo}" alt="โลโก้ที่ฝัง"><figcaption><b>โลโก้ที่ฝัง (W)</b><span class="score">ต้นแบบ ${T.k} × ${T.k}</span></figcaption></figure>
-      <figure><img src="${m.logo}" alt="โลโก้ที่ดึงจากรูปที่ฝัง"><figcaption>${cap('ดึงจาก Watermarked', m)}</figcaption></figure>
-      <figure><img src="${o.logo}" alt="โลโก้ที่ดึงจากรูปที่ไม่เคยฝัง"><figcaption>${cap('ดึงจาก Original (ไม่เคยฝัง)', o)}</figcaption></figure>`;
+    box.innerHTML = `<figure><img src="${T.logo}" alt="Logo ที่ฝัง"><figcaption><b>Logo ที่ฝัง (W)</b><span class="score">ขนาด ${T.k} × ${T.k}</span></figcaption></figure>
+      <figure><img src="${m.logo}" alt="Logo ที่ดึงจากภาพที่ฝัง"><figcaption>${cap('ดึงจาก Watermarked', m)}</figcaption></figure>
+      <figure><img src="${o.logo}" alt="Logo ที่ดึงจากภาพที่ไม่เคยฝัง"><figcaption>${cap('ดึงจาก Original (ไม่เคยฝัง)', o)}</figcaption></figure>`;
     box.hidden = false;
     return;
   }
-  if (v === 'diff') makeCompare(box, T.cover, 'Original', T.diff, 'จุดที่ถูกแก้ ×20', true);
-  else if (v === 'attacked' && T.check?.m.attacked) makeCompare(box, T.cover, 'Original', T.check.m.attacked, `Watermarked หลัง attack: ${T.check.attack}`, false);
+  if (v === 'diff') makeCompare(box, T.cover, 'Original', T.diff, 'Difference ×20', true);
+  else if (v === 'attacked' && T.check?.m.attacked) makeCompare(box, T.cover, 'Original', T.check.m.attacked, `Watermarked after attack: ${T.check.attack}`, false);
   else makeCompare(box, T.cover, 'Original', T.marked, `Watermarked · PSNR ${ps} dB`, false);
 }
 $('#w-compare')._redraw = drawWm;
 $$('#w-views button').forEach(b => b.onclick = () => { S.wm.view = b.dataset.view; drawWm(); });
 $('#w-embed').onclick = async () => {
   const T = S.wm, alpha = +$('#w-alpha').value;
-  if (T.logoKind === 'image' && !T.logoImage) { showErr($('#w-err'), 'เลือกรูปโลโก้ก่อน หรือเปลี่ยนไปใช้แบบพิมพ์ตัวอักษร'); return; }
+  if (T.logoKind === 'image' && !T.logoImage) { showErr($('#w-err'), 'กรุณาเลือกภาพ logo ก่อน หรือเปลี่ยนเป็นแบบพิมพ์ข้อความ'); return; }
   const body = {cover: T.cover, alpha, logo_text: $('#w-logo').value};
   if (T.logoKind === 'image') body.logo_image = T.logoImage;
   const r = await api('/api/wm/embed', body);
@@ -936,7 +936,7 @@ async function wmCheckOne(img, a) {
   r.attacked = attacked;
   return r;
 }
-const EVID = {yes: 'มีลายน้ำของเรา', no: 'ไม่มีลายน้ำของเรา', unsure: 'ไม่แน่ใจ'};
+const EVID = {yes: 'พบ watermark ของเรา', no: 'ไม่พบ watermark ของเรา', unsure: 'ไม่แน่ใจ'};
 $('#w-check').onclick = async () => {
   const a = ATTACKS[$('#w-attack').value];
   const m = await wmCheckOne(S.wm.marked, a), o = await wmCheckOne(S.wm.cover, a);
@@ -948,13 +948,13 @@ $('#w-check').onclick = async () => {
   const v = (who, r) => `<div class="verdict ${r.evidence}"><div class="who">${who}</div><div class="what">${EVID[r.evidence]}</div></div>`;
   $('#w-result').innerHTML = `
     <div class="verdicts">${v('Watermarked', m)}${v('Original (ไม่เคยฝัง)', o)}</div>
-    <p class="note" style="margin:0">โลโก้ขึ้นได้ทั้งสองรูป เพราะ key ที่เก็บไว้ตอนฝังจำหน้าตาโลโก้ไว้เกือบทั้งหมด จึง<b>ตัดสินจากรูปโลโก้ไม่ได้</b> ให้ดู shift score แทน · ดูโลโก้ขนาดใหญ่ได้ที่จอกลาง${a[0] !== 'none' ? ` · attack: <span class="mono">${esc(a[2])}</span> (ดูรูปได้ที่ปุ่ม "หลัง attack")` : ''}</p>
+    <p class="note" style="margin:0">Logo ปรากฏทั้งสองภาพ เพราะ key ที่เก็บไว้ตอนฝังจำรูปร่างของ logo ไว้เกือบทั้งหมด จึง<b>ตัดสินจากหน้าตาของ logo อย่างเดียวไม่ได้</b> ให้ดู shift score แทน · ดู logo ขนาดใหญ่ได้ที่พื้นที่แสดงภาพตรงกลาง${a[0] !== 'none' ? ` · attack: <span class="mono">${esc(a[2])}</span> (ดูภาพได้ที่ปุ่ม "After attack")` : ''}</p>
     <table class="cmp">
       <thead><tr><th></th><th>Watermarked</th><th>Original</th></tr></thead>
       <tbody>
-        <tr><td><b class="mono">shift score</b><span class="sub">คะแนนยืนยันเจ้าของ 0–1 · ตั้งแต่ 0.8 = รูปของเรา</span></td>
+        <tr><td><b class="mono">shift score</b><span class="sub">ownership score 0–1 · ตั้งแต่ 0.8 ขึ้นไป = ภาพของเรา</span></td>
             <td class="num ${m.shift >= 0.8 ? 'ok' : ''}">${m.shift.toFixed(3)}</td><td class="num ${o.shift >= 0.8 ? 'ok' : ''}">${o.shift.toFixed(3)}</td></tr>
-        <tr><td><span class="mono">NCC</span><span class="sub">ความเหมือนโลโก้ · สูงได้แม้ไม่เคยฝัง</span></td>
+        <tr><td><span class="mono">NCC</span><span class="sub">ความคล้ายกับ logo · สูงได้แม้ภาพไม่เคยฝัง</span></td>
             <td class="num" style="font-weight:400">${m.ncc.toFixed(3)}</td><td class="num" style="font-weight:400">${o.ncc.toFixed(3)}</td></tr>
       </tbody>
     </table>`;
@@ -966,16 +966,16 @@ function caseById(id) { return S.info.cases.find(c => c.id === id); }
 function ownPhotos(c) {
   const names = [...new Set(c.runs.map(r => r.image))];
   const lab = n => (S.info.samples.find(x => x.name === n) || {label: n}).label;
-  return names.map(n => /^(ภาพ|รูป)/.test(lab(n)) ? lab(n) : 'รูป' + lab(n)).join(' + ');
+  return names.map(lab).join(' + ');
 }
 const differs = id => S.auto[id] === false && S.results[id]?.custom_image;  /* "failed" only because another photo was used */
 function renderThumbs() {
-  const items = [`<button type="button" class="def" data-img="" aria-pressed="${!S.testImage}">ตามที่ตั้งไว้</button>`]
+  const items = [`<button type="button" class="def" data-img="" aria-pressed="${!S.testImage}">Default</button>`]
     .concat(S.info.samples.map(sm => `<button type="button" data-img="${esc(sm.name)}" aria-pressed="${S.testImage === sm.name}" title="${esc(sm.label)}"><img src="${sm.image}" alt="${esc(sm.label)}"></button>`));
-  if (S.testImage && S.testImage.startsWith('data:')) items.push(`<button type="button" data-img="upload" aria-pressed="true" title="รูปที่อัปโหลด"><img src="${S.testImage}" alt="รูปที่อัปโหลด"></button>`);
+  if (S.testImage && S.testImage.startsWith('data:')) items.push(`<button type="button" data-img="upload" aria-pressed="true" title="ภาพที่อัปโหลด"><img src="${S.testImage}" alt="ภาพที่อัปโหลด"></button>`);
   $('#t-thumbs').innerHTML = items.join('');
   const note = $('#t-imgnote');
-  note.textContent = S.testImage ? `ทุกกรณีใช้รูป: ${S.testImageLabel} · ผลที่คาดเขียนไว้สำหรับรูปเดิม จึงอาจต่างได้` : 'ใช้รูปที่ตั้งไว้ในแต่ละกรณี';
+  note.textContent = S.testImage ? `ทุก case ใช้ภาพ: ${S.testImageLabel} · ผลที่คาดไว้กำหนดจากภาพเดิม จึงอาจต่างกันได้` : 'ใช้ภาพตามที่กำหนดไว้ในแต่ละ case';
   note.classList.toggle('warn', !!S.testImage);
 }
 function setTestImage(img, label) {
@@ -998,23 +998,23 @@ function renderSummary() {
   const pass = vals.filter(v => v === 'pass').length, fail = vals.filter(v => v === 'fail').length;
   const ran = Object.keys(S.auto).length, aPass = Object.values(S.auto).filter(v => v === true).length;
   const nDiff = Object.keys(S.auto).filter(differs).length;
-  $('#t-sum').innerHTML = `<span>ยืนยันแล้ว <b>${vals.length}</b> / ${n} (ตรง ${pass} · ไม่ตรง ${fail})</span>
+  $('#t-sum').innerHTML = `<span>ผู้ทดสอบยืนยันแล้ว <b>${vals.length}</b> / ${n} (ตรง ${pass} · ไม่ตรง ${fail})</span>
     <div class="bar" aria-hidden="true"><i class="p" style="width:${100 * pass / n}%"></i><i class="f" style="width:${100 * fail / n}%"></i></div>
-    <span>ระบบเช็คผ่าน <b>${aPass}</b> / ${ran} ที่รันแล้ว${nDiff ? ` · ต่างจากที่คาดเพราะใช้รูปอื่น ${nDiff}` : ''}</span>`;
+    <span>ผ่านการตรวจอัตโนมัติ <b>${aPass}</b> / ${ran} case ที่รันแล้ว${nDiff ? ` · ต่างจากที่คาดเพราะใช้ภาพอื่น ${nDiff}` : ''}</span>`;
 }
 function stateOf(id) {
   const j = S.judged[id];
-  if (j === 'pass') return ['pass', '✓', 'ยืนยันว่าตรง'];
-  if (j === 'fail') return ['fail', '✗', 'ยืนยันว่าไม่ตรง'];
-  if (S.auto[id] === true) return ['auto', '✓', 'ระบบเช็คผ่าน ยังไม่ได้ยืนยัน'];
-  if (differs(id)) return ['warn', '≠', 'ต่างจากที่คาด เพราะใช้รูปอื่น'];
-  if (S.auto[id] === false) return ['fail', '!', 'ระบบเช็คไม่ผ่าน'];
+  if (j === 'pass') return ['pass', '✓', 'ผู้ทดสอบยืนยันว่าตรง'];
+  if (j === 'fail') return ['fail', '✗', 'ผู้ทดสอบยืนยันว่าไม่ตรง'];
+  if (S.auto[id] === true) return ['auto', '✓', 'ผ่านการตรวจอัตโนมัติ แต่ยังไม่ได้ยืนยัน'];
+  if (differs(id)) return ['warn', '≠', 'ต่างจากที่คาด เพราะใช้ภาพอื่น'];
+  if (S.auto[id] === false) return ['fail', '!', 'ไม่ผ่านการตรวจอัตโนมัติ'];
   return ['', '', 'ยังไม่ได้รัน'];
 }
 function renderList() {
   let html = '', group = '';
   for (const c of S.info.cases) {
-    const g = c.kind === 'stego' ? 'ซ่อนข้อความ · S1–S14' : 'Watermark · W1–W6';
+    const g = c.kind === 'stego' ? 'Steganography · S1–S14' : 'Watermark · W1–W6';
     if (g !== group) { html += `<h3>${g}</h3>`; group = g; }
     const [cls, sym, lab] = stateOf(c.id);
     html += `<button type="button" data-id="${c.id}" aria-current="${S.sel === c.id}"><span class="cid">${c.id}</span><span class="ct">${esc(c.title)}</span><span class="st ${cls}" title="${lab}" aria-label="${lab}">${sym}</span></button>`;
@@ -1025,7 +1025,7 @@ function renderList() {
 function chipsOf(c) {
   return c.settings.split(' · ').map(t => {
     const atk = /JPEG|noise|Crop|Rotate|Blur|Resize|Median/.test(t);
-    const photo = /รูป/.test(t) && !/รูปต้นฉบับ/.test(t);
+    const photo = /ภาพ/.test(t) && !/ภาพต้นฉบับ/.test(t);
     return `<span class="${atk ? 'atk' : photo && S.testImage ? 'off' : ''}">${esc(t)}</span>`;
   }).join('');
 }
@@ -1033,47 +1033,47 @@ function runBlock(c, r) {
   const fig = (src, cap, sq) => src ? `<figure><img ${sq ? 'class="sq"' : ''} src="${src}" alt="${esc(cap)}"><figcaption>${esc(cap)}</figcaption></figure>` : '';
   const custom = S.results[c.id]?.custom_image;
   const mark = r.auto === true ? '<span class="auto pass">✓ ตรงตามคาด</span>'
-    : r.auto === false ? (custom ? '<span class="auto warn">≠ ต่างจากที่คาด (รูปอื่น)</span>' : '<span class="auto fail">✗ ไม่ตรงตามคาด</span>') : '';
+    : r.auto === false ? (custom ? '<span class="auto warn">≠ ต่างจากที่คาด (ภาพอื่น)</span>' : '<span class="auto fail">✗ ไม่ตรงตามคาด</span>') : '';
   if (r.error) return `<div class="tp-run"><div class="rh"><b>${esc(r.label)}</b>${mark}</div><div class="err">${esc(r.error)}</div></div>`;
   let head, imgs, meta;
   if (c.kind === 'stego') {
     const color = r.status === 'ok' ? 'var(--ok)' : r.status === 'damaged' ? '#B45309' : '#52525B';
     head = `<span class="pill" style="background:${color};font-size:16px">${r.status}</span> ${esc(STATUS_TH[r.status])}`;
-    imgs = fig(r.cover, 'Original') + fig(r.stego, r.psnr ? `ซ่อนแล้ว · PSNR ${r.psnr} dB` : 'ซ่อนแล้ว') + fig(r.attacked, `หลัง ${r.attack}`);
-    meta = `${r.bits ? `BER ${r.wrong_bits}/${r.bits}` : 'อ่านจากรูปต้นฉบับ'} · CRC-16 ${r.status === 'ok' ? 'pass' : 'fail'}${r.corrected ? ` · ECC แก้ ${r.corrected} bits` : ''}`
+    imgs = fig(r.cover, 'Original') + fig(r.stego, r.psnr ? `Stego · PSNR ${r.psnr} dB` : 'Stego') + fig(r.attacked, `After ${r.attack}`);
+    meta = `${r.bits ? `BER ${r.wrong_bits}/${r.bits}` : 'อ่านจากภาพต้นฉบับ'} · CRC-16 ${r.status === 'ok' ? 'pass' : 'fail'}${r.corrected ? ` · ECC แก้ ${r.corrected} bits` : ''}`
       + (r.status === 'ok' ? `</div><div class="msgline">“${esc(r.text)}”` : '');
   } else {
     const color = r.evidence === 'yes' ? 'var(--ok)' : r.evidence === 'unsure' ? '#B45309' : '#52525B';
     head = `<span class="pill" style="background:${color};font-size:16px">${EVID[r.evidence]}</span>`;
     imgs = fig(r.target === 'original' ? r.cover : r.stego, r.target === 'original' ? 'Original (ไม่เคยฝัง)' : `Watermarked · PSNR ${r.psnr ?? '∞'} dB`)
-      + (r.attacked ? fig(r.attacked, `หลัง ${r.attack}`) : '') + fig(r.logo, 'โลโก้ที่ดึงออกมา', true);
+      + (r.attacked ? fig(r.attacked, `After ${r.attack}`) : '') + fig(r.logo, 'Logo ที่ดึงออกมา', true);
     meta = `shift score ${r.shift.toFixed(3)} · NCC ${r.ncc.toFixed(3)}`;
   }
   return `<div class="tp-run"><div class="rh"><b>${esc(r.label)}</b>${head}${mark}</div><div class="imgs">${imgs}</div><div class="meta">${meta}</div></div>`;
 }
 function renderDetail() {
   const box = $('#t-detail'), c = S.sel && caseById(S.sel);
-  if (!c) { box.innerHTML = '<div class="tp-empty">เลือกกรณีทางซ้าย หรือกด Run all</div>'; return; }
+  if (!c) { box.innerHTML = '<div class="tp-empty">เลือก test case จากรายการทางซ้าย หรือกด Run all</div>'; return; }
   const res = S.results[c.id], j = S.judged[c.id], auto = S.auto[c.id];
   const warn = differs(c.id);
   const got = res ? (auto === true ? 'ตรงตามคาด' : warn ? 'ต่างจากที่คาด' : auto === false ? 'ไม่ตรงตามคาด' : 'ดูผลด้านล่าง') : 'ยังไม่ได้รัน';
-  const why = warn ? `<div class="why">ผลที่คาดเขียนไว้สำหรับ${esc(ownPhotos(c))} แต่รอบนี้ใช้${esc(S.testImageLabel)} ผลจึงต่างได้ กด "ตามที่ตั้งไว้" ด้านบนเพื่อดูผลกับรูปเดิม</div>` : '';
+  const why = warn ? `<div class="why">ผลที่คาดไว้กำหนดจาก “${esc(ownPhotos(c))}” แต่รอบนี้ใช้ “${esc(S.testImageLabel)}” ผลจึงอาจต่างกัน กด "Default" ด้านบนเพื่อกลับไปใช้ภาพเดิม</div>` : '';
   box.innerHTML = `
-    <div class="top"><span class="bid">${c.id}</span><h2>${esc(c.title)}</h2><button class="btn" data-run="${c.id}">${res ? 'Run อีกครั้ง' : 'Run'}</button></div>
-    <div class="tp-chips">${chipsOf(c)}${S.testImage ? `<span class="atk">ใช้รูป: ${esc(S.testImageLabel)} (แทน${esc(ownPhotos(c))})</span>` : ''}</div>
+    <div class="top"><span class="bid">${c.id}</span><h2>${esc(c.title)}</h2><button class="btn" data-run="${c.id}">${res ? 'Run again' : 'Run'}</button></div>
+    <div class="tp-chips">${chipsOf(c)}${S.testImage ? `<span class="atk">ใช้ภาพ: ${esc(S.testImageLabel)} (แทน ${esc(ownPhotos(c))})</span>` : ''}</div>
     <div class="tp-expect">
       <div class="tp-box exp"><div class="k">ผลที่คาด</div><div class="v">${esc(c.expected)}</div></div>
-      <div class="tp-box got ${auto === true ? 'pass' : warn ? 'warn' : auto === false ? 'fail' : ''}"><div class="k">ระบบเช็ค</div><div class="v">${got}</div>${why}</div>
+      <div class="tp-box got ${auto === true ? 'pass' : warn ? 'warn' : auto === false ? 'fail' : ''}"><div class="k">ตรวจอัตโนมัติ</div><div class="v">${got}</div>${why}</div>
     </div>
     ${res ? res.runs.map(r => runBlock(c, r)).join('') : ''}
     <div class="tp-judge">
-      <span class="q">คุณเห็นว่าผลตรงกับที่คาดไหม</span>
+      <span class="q">ผลที่ได้ตรงกับที่คาดไว้หรือไม่</span>
       <button class="btn okb" data-judge="pass" aria-pressed="${j === 'pass'}" ${res ? '' : 'disabled'}>ตรง</button>
       <button class="btn nob" data-judge="fail" aria-pressed="${j === 'fail'}" ${res ? '' : 'disabled'}>ไม่ตรง</button>
       <label for="t-note" style="position:absolute;left:-9999px">หมายเหตุ</label>
-      <input type="text" id="t-note" placeholder="หมายเหตุ (ไม่ใส่ก็ได้)" ${res ? '' : 'disabled'}>
+      <input type="text" id="t-note" placeholder="หมายเหตุ (ไม่บังคับ)" ${res ? '' : 'disabled'}>
       <span class="saved" id="t-saved"></span>
-      <button class="btn sec next" data-next>กรณีถัดไป →</button>
+      <button class="btn sec next" data-next>Case ถัดไป →</button>
     </div>`;
 }
 async function runCase(id) {
@@ -1094,7 +1094,7 @@ $('#t-detail').onclick = async e => {
   }
   if (judge) {
     const c = caseById(S.sel), res = S.results[S.sel], v = judge.dataset.judge;
-    const observed = (S.testImage ? `[รูป: ${S.testImageLabel}] ` : '') + res.runs.map(r => `${r.label}: ${r.error ? 'refused' : (r.status || EVID[r.evidence] + ' shift=' + r.shift)}`).join(' | ');
+    const observed = (S.testImage ? `[ภาพ: ${S.testImageLabel}] ` : '') + res.runs.map(r => `${r.label}: ${r.error ? 'refused' : (r.status || EVID[r.evidence] + ' shift=' + r.shift)}`).join(' | ');
     const note = $('#t-note').value;
     const out = await api('/api/log', {tester: $('#t-name').value, case_id: c.id, observed, matched: v === 'pass', note});
     if (out.error) { $('#t-saved').textContent = out.error; return; }
@@ -1111,13 +1111,13 @@ $('#t-runall').onclick = async () => {
 
 /* ---------------------------------------------------------------- start */
 (async () => {
-  $('#host').textContent = 'local · ' + location.host;
+  $('#host').textContent = location.host;
   S.info = await api('/api/info');
   if (S.info.error) { document.body.insertAdjacentHTML('afterbegin', `<div class="err">${esc(S.info.error)}</div>`); return; }
   fillSources(); updateCap(); S.sel = S.info.cases[0].id; renderThumbs(); renderList(); renderDetail();
   const p = location.hash.slice(1); if (['stego', 'wm', 'tests', 'how'].includes(p)) go(p);
   if (S.info.samples.length) { loadCover('stego', S.info.samples[0].image); loadCover('wm', S.info.samples[0].image); }
-  else { $('#s-empty').textContent = 'ไม่พบรูปตัวอย่างใน data/images — กด Upload เพื่อเลือกรูปของคุณ'; $('#w-empty').textContent = $('#s-empty').textContent; }
+  else { $('#s-empty').textContent = 'ไม่พบภาพตัวอย่างใน data/images — กด Upload เพื่อเลือกภาพของคุณ'; $('#w-empty').textContent = $('#s-empty').textContent; }
 })();
 </script>
 </body>

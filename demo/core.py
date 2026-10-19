@@ -39,17 +39,17 @@ MODES = {
 # Sample photos from the BSDS500 evaluation set (shown only if data/images exists on this computer).
 SAMPLES = [
     ("249061.jpg", "ภาพทั่วไป"),
-    ("80099.jpg", "เรียบมาก (คอนทราสต์ต่ำ)"),
-    ("189029.jpg", "ลายละเอียดเยอะ"),
-    ("181021.jpg", "สว่างมาก"),
-    ("42078.jpg", "มืดมาก"),
-    ("196040.jpg", "มีส่วนขาวจัด (255)"),
+    ("80099.jpg", "ภาพเรียบมาก (contrast ต่ำ)"),
+    ("189029.jpg", "ภาพที่มีรายละเอียดเยอะ"),
+    ("181021.jpg", "ภาพสว่างมาก"),
+    ("42078.jpg", "ภาพมืดมาก"),
+    ("196040.jpg", "ภาพที่มีส่วนขาวจัด (255)"),
 ]
 
 STATUS_TEXT = {
-    "ok": "อ่านได้ครบ: CRC ผ่าน ได้ข้อความเดิมทุกตัวอักษร",
-    "no_message": "ไม่พบข้อความ: รูปนี้ไม่เคยซ่อนอะไร หรือ key / mode ไม่ตรงกับตอนซ่อน",
-    "damaged": "ข้อความเสียหาย: เจอข้อความ แต่ CRC ไม่ผ่าน (รูปถูกบีบอัด มี noise หรือถูกแก้)",
+    "ok": "อ่านข้อความได้ครบ: CRC ผ่าน ได้ข้อความเดิมทุกตัวอักษร",
+    "no_message": "ไม่พบข้อความ: ภาพนี้ไม่เคยซ่อนข้อความ หรือ key / mode ไม่ตรงกับตอน encode",
+    "damaged": "ข้อความเสียหาย: พบข้อความ แต่ CRC ไม่ผ่าน (ภาพอาจถูก compress, มี noise หรือถูกแก้ไข)",
 }
 
 
@@ -74,14 +74,14 @@ def gray_matrix(data_url: str, allow_resize: bool) -> tuple[np.ndarray, list[str
     if allow_resize and max(img.size) > MAX_SIDE:
         s = MAX_SIDE / max(img.size)
         img = img.resize((max(16, round(img.width * s)), max(16, round(img.height * s))), Image.LANCZOS)
-        notes.append(f"ย่อให้ด้านยาวไม่เกิน {MAX_SIDE} px")
+        notes.append(f"ย่อภาพให้ด้านยาวไม่เกิน {MAX_SIDE} px")
     if img.mode not in ("L",):
-        notes.append("แปลงเป็นภาพเทา")
+        notes.append("แปลงเป็น grayscale")
     g = to_gray(img)
     h, w = g.shape
     g = crop_to_multiple(g, 16)
     if g.shape != (h, w):
-        notes.append(f"ตัดขอบจาก {w}×{h} (ด้านต้องหาร 16 ลงตัว)")
+        notes.append(f"ตัดขอบจาก {w}×{h} (ความกว้างและความสูงต้องหารด้วย 16 ลงตัว)")
     return g, notes
 
 
@@ -129,13 +129,13 @@ def stego_embed(cover: str, text: str, key: str, mode: str, ecc: bool = False) -
     A, _ = gray_matrix(cover, allow_resize=False)
     p = _mode(mode)
     if not text:
-        return {"error": "ยังไม่ได้พิมพ์ข้อความ"}
+        return {"error": "กรุณาพิมพ์ข้อความก่อน"}
     need, cap = stego.message_bits_needed(text, ecc), stego.capacity(A.shape, p["b"])
     if need > cap:
         return {
-            "error": f"ข้อความยาว {len(text.encode('utf-8'))} bytes แต่รูปนี้ใน mode {p['label']}"
-            f"{' + ECC' if ecc else ''} จุได้ {stego.text_capacity_bytes(A.shape, p['b'], ecc)} bytes "
-            f"ลองย่อข้อความ{' ปิด ECC' if ecc else ''} หรือเปลี่ยนเป็น mode ที่จุมากกว่า"
+            "error": f"ข้อความยาว {len(text.encode('utf-8'))} bytes แต่ภาพนี้ใน mode {p['label']}"
+            f"{' + ECC' if ecc else ''} รองรับได้ {stego.text_capacity_bytes(A.shape, p['b'], ecc)} bytes "
+            f"ลองตัดข้อความให้สั้นลง{' ปิด ECC' if ecc else ''} หรือเปลี่ยนเป็น mode ที่มี capacity สูงกว่า"
         }
     r = stego.embed_text(A, text, p["delta"], p["b"], key=_key(key), ecc=ecc)
     diff = np.abs(r.image - A)
@@ -298,11 +298,11 @@ def wm_embed(cover: str, alpha: float, logo_text: str = "", logo_image: str | No
 
 def wm_extract(image: str, key_id: str) -> dict:
     if key_id not in _WM_KEYS:
-        return {"error": "ไม่พบ key ของลายน้ำ (เปิดแอปใหม่แล้วหรือยัง?) กรุณาฝังลายน้ำใหม่อีกครั้ง"}
+        return {"error": "ไม่พบ key ของ watermark (เซิร์ฟเวอร์อาจเพิ่งรีสตาร์ต) กรุณา embed ใหม่อีกครั้ง"}
     key, W = _WM_KEYS[key_id]
     B, _ = gray_matrix(image, allow_resize=False)
     if B.shape != (key.U.shape[0], key.Vt.shape[1]):
-        return {"error": f"ขนาดรูป {B.shape[1]}×{B.shape[0]} ไม่ตรงกับรูปตอนฝังลายน้ำ"}
+        return {"error": f"ขนาดภาพ {B.shape[1]}×{B.shape[0]} ไม่ตรงกับภาพตอน embed watermark"}
     s = watermark.singular_values(B)
     Ws = watermark.extract_from_sigma(s, key)
     shift = watermark.shift_from_sigma(s, key)
@@ -320,10 +320,10 @@ def wm_extract(image: str, key_id: str) -> dict:
 def _wm_verdict(shift: float) -> tuple[str, str]:
     """Thresholds 0.8 / 0.3 are rough demo values (results/findings.md: they do not hold after blurring)."""
     if shift >= 0.8:
-        return "yes", "มีลายน้ำของเรา: σ ของรูปขยับไปทางเดียวกับตอนฝัง"
+        return "yes", "พบ watermark ของเรา: σ ของภาพเลื่อนไปในทิศทางเดียวกับตอน embed"
     if shift <= 0.3:
-        return "no", "ไม่มีลายน้ำของเรา: σ ไม่ได้ขยับแบบตอนฝัง (แม้โลโก้จะขึ้นมาก็ตาม)"
-    return "unsure", "ไม่แน่ใจ: รูปน่าจะถูกแก้ไข (เช่น บีบอัด หรือมี noise) ตัดสินแน่ชัดไม่ได้"
+        return "no", "ไม่พบ watermark ของเรา: σ ไม่ได้เลื่อนเหมือนตอน embed (แม้ logo จะปรากฏขึ้นมาก็ตาม)"
+    return "unsure", "ไม่แน่ใจ: ภาพน่าจะถูกแก้ไข (เช่น compress หรือมี noise) จึงตัดสินไม่ได้ชัดเจน"
 
 
 def wm_attack(image: str, kind: str, level) -> dict:
@@ -343,7 +343,7 @@ def log_result(tester: str, case_id: str, observed: str, matched: bool, note: st
     tester = tester.strip() or "ไม่ระบุชื่อ"
     case = next((c for c in test_cases() if c["id"] == case_id), None)
     if case is None:
-        return {"error": f"ไม่รู้จักกรณีทดสอบ {case_id}"}
+        return {"error": f"ไม่พบ test case {case_id}"}
     new = not LOG_FILE.exists()
     with LOG_FILE.open("a", newline="", encoding="utf-8-sig") as f:
         w = csv.DictWriter(f, fieldnames=LOG_FIELDS)
@@ -391,7 +391,7 @@ def sample_matrix(name: str) -> np.ndarray:
         raise ValueError(f"unknown sample {name!r}")
     hits = list((ROOT / "data" / "images").glob(f"*/{name}"))
     if not hits:
-        raise FileNotFoundError(f"ไม่พบรูปตัวอย่าง {name} (ยังไม่ได้วางชุด BSDS500 ไว้ใน data/images)")
+        raise FileNotFoundError(f"ไม่พบภาพตัวอย่าง {name} (ยังไม่ได้วางชุดข้อมูล BSDS500 ไว้ใน data/images)")
     return crop_to_multiple(to_gray(Image.open(hits[0])), 16)
 
 
@@ -437,7 +437,7 @@ def _run_stego(run: dict, image: str | None = None) -> dict:
         if need > cap:
             byts = stego.text_capacity_bytes(A.shape, p["b"], run["ecc"])
             n = len(run["text"].encode("utf-8"))
-            out["error"] = f"ไม่ซ่อน: ข้อความยาว {n} bytes แต่ mode {p['label']} จุได้ {byts} bytes"
+            out["error"] = f"ไม่ได้ encode: ข้อความยาว {n} bytes แต่ mode {p['label']} รองรับได้ {byts} bytes"
             return out
         r = stego.embed_text(A, run["text"], p["delta"], p["b"], key=_key(run["key"]), ecc=run["ecc"])
         S = r.image
@@ -495,7 +495,7 @@ def run_case(case_id: str, image: str | None = None) -> dict:
     """
     case = next((c for c in test_cases() if c["id"] == case_id), None)
     if case is None:
-        return {"error": f"ไม่รู้จักกรณีทดสอบ {case_id}"}
+        return {"error": f"ไม่พบ test case {case_id}"}
     runner = _run_stego if case["kind"] == "stego" else _run_wm
     runs = [runner(r, image) for r in case["runs"]]
     for spec, r in zip(case["runs"], runs, strict=True):

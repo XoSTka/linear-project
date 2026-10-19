@@ -2,9 +2,9 @@
  {
   "id": "S1",
   "kind": "stego",
-  "title": "ซ่อนข้อความสั้น แล้วอ่านกลับ",
-  "settings": "Balanced · ไม่ใส่ key · ไม่มี attack",
-  "expected": "ok ได้ข้อความเดิมครบ",
+  "title": "Encode ข้อความสั้น แล้ว decode กลับ",
+  "settings": "Balanced · ไม่ใช้ key · ไม่มี attack",
+  "expected": "ok — ได้ข้อความเดิมครบถ้วน",
   "runs": [
    {
     "image": "249061.jpg",
@@ -18,7 +18,7 @@
      null
     ],
     "read_original": false,
-    "label": "ไม่ใส่ key",
+    "label": "ไม่ใช้ key",
     "expect": {
      "status": "ok"
     }
@@ -28,9 +28,9 @@
  {
   "id": "S2",
   "kind": "stego",
-  "title": "ใส่ key และผู้รับใส่ถูก",
-  "settings": "Balanced · key ผู้ส่ง kmitl · ผู้รับ kmitl",
-  "expected": "ok ได้ข้อความเดิม",
+  "title": "ใช้ key และ Receiver ใส่ถูกต้อง",
+  "settings": "Balanced · key ของ Sender = kmitl · key ของ Receiver = kmitl",
+  "expected": "ok — ได้ข้อความเดิมครบถ้วน",
   "runs": [
    {
     "image": "249061.jpg",
@@ -54,9 +54,9 @@
  {
   "id": "S3",
   "kind": "stego",
-  "title": "ผู้รับใส่ key ผิดหนึ่งตัว",
-  "settings": "Balanced · key ผู้ส่ง kmitl · ผู้รับ kmit1",
-  "expected": "no_message (ไม่มีตัวอักษรขยะออกมา)",
+  "title": "Receiver ใส่ key ผิดหนึ่งตัวอักษร",
+  "settings": "Balanced · key ของ Sender = kmitl · key ของ Receiver = kmit1",
+  "expected": "no_message (ต้องไม่ได้ข้อความขยะออกมา)",
   "runs": [
    {
     "image": "249061.jpg",
@@ -80,8 +80,8 @@
  {
   "id": "S4",
   "kind": "stego",
-  "title": "ผู้รับไม่ใส่ key",
-  "settings": "Balanced · key ผู้ส่ง kmitl · ผู้รับไม่ใส่",
+  "title": "Receiver ไม่ใส่ key",
+  "settings": "Balanced · key ของ Sender = kmitl · Receiver ไม่ใส่ key",
   "expected": "no_message",
   "runs": [
    {
@@ -96,7 +96,7 @@
      null
     ],
     "read_original": false,
-    "label": "key kmitl → (ว่าง)",
+    "label": "key kmitl → (ไม่ใส่)",
     "expect": {
      "not_ok": true
     }
@@ -106,9 +106,9 @@
  {
   "id": "S5",
   "kind": "stego",
-  "title": "อ่านรูปที่ไม่เคยซ่อนอะไร",
-  "settings": "อ่านจากรูปต้นฉบับ · ลองทั้งไม่ใส่และใส่ key",
-  "expected": "no_message หรือ damaged แต่ต้องไม่ใช่ ok",
+  "title": "Decode ภาพที่ไม่เคยซ่อนข้อความ",
+  "settings": "อ่านจากภาพต้นฉบับ · ลองทั้งแบบไม่ใส่ key และใส่ key",
+  "expected": "no_message หรือ damaged (ต้องไม่ใช่ ok)",
   "runs": [
    {
     "image": "249061.jpg",
@@ -122,7 +122,7 @@
      null
     ],
     "read_original": true,
-    "label": "ไม่ใส่ key",
+    "label": "ไม่ใช้ key",
     "expect": {
      "not_ok": true
     }
@@ -149,14 +149,14 @@
  {
   "id": "S6",
   "kind": "stego",
-  "title": "ข้อความยาวเกินความจุ",
-  "settings": "Robust (จุ 71 bytes) · ข้อความ ~290 bytes",
-  "expected": "ไม่ซ่อน และบอกว่ารูปจุได้กี่ bytes",
+  "title": "ข้อความยาวเกิน capacity",
+  "settings": "Robust (capacity 71 bytes) · ข้อความ ~280 bytes",
+  "expected": "ไม่ encode และแจ้งว่าภาพรองรับได้กี่ bytes",
   "runs": [
    {
     "image": "249061.jpg",
     "mode": "robust",
-    "text": "ข้อความนี้ยาวเกือบเต็มความจุของรูปในโหมดสมดุลเพื่อทดสอบว่าระบบยังซ่อนและอ่านกลับได้ครบทุกตัวอักษร",
+    "text": "ข้อความนี้ยาวเกือบเต็ม capacity ของภาพในโหมด Balanced เพื่อทดสอบว่าระบบยัง encode และ decode กลับได้ครบถ้วนทุกตัวอักษร",
     "key": "",
     "read_key": "",
     "ecc": false,
@@ -175,14 +175,14 @@
  {
   "id": "S7",
   "kind": "stego",
-  "title": "ข้อความเกือบเต็มความจุ",
-  "settings": "Balanced (จุ 296 bytes) · ข้อความ ~290 bytes",
-  "expected": "ok ได้ครบทุกตัวอักษร",
+  "title": "ข้อความเกือบเต็ม capacity",
+  "settings": "Balanced (capacity 296 bytes) · ข้อความ ~280 bytes",
+  "expected": "ok — ได้ข้อความครบทุกตัวอักษร",
   "runs": [
    {
     "image": "249061.jpg",
     "mode": "balanced",
-    "text": "ข้อความนี้ยาวเกือบเต็มความจุของรูปในโหมดสมดุลเพื่อทดสอบว่าระบบยังซ่อนและอ่านกลับได้ครบทุกตัวอักษร",
+    "text": "ข้อความนี้ยาวเกือบเต็ม capacity ของภาพในโหมด Balanced เพื่อทดสอบว่าระบบยัง encode และ decode กลับได้ครบถ้วนทุกตัวอักษร",
     "key": "",
     "read_key": "",
     "ecc": false,
@@ -201,7 +201,7 @@
  {
   "id": "S8",
   "kind": "stego",
-  "title": "บันทึกเป็น JPEG",
+  "title": "Encode แล้วบันทึกเป็น JPEG",
   "settings": "Balanced · key kmitl · JPEG Q90",
   "expected": "ok (BER 0)",
   "runs": [
@@ -227,9 +227,9 @@
  {
   "id": "S9",
   "kind": "stego",
-  "title": "Capacity + JPEG แรง",
+  "title": "Capacity + JPEG คุณภาพต่ำ",
   "settings": "Capacity · JPEG Q50",
-  "expected": "damaged หรือ no_message (บล็อกเล็กทน JPEG แรงไม่ได้)",
+  "expected": "damaged หรือ no_message (block เล็กทน JPEG ที่ compress แรงไม่ได้)",
   "runs": [
    {
     "image": "249061.jpg",
@@ -279,9 +279,9 @@
  {
   "id": "S11",
   "kind": "stego",
-  "title": "Crop กลางรูป: Robust vs Balanced",
+  "title": "Crop กลางภาพ: Robust vs Balanced",
   "settings": "Robust และ Balanced · Crop center 10%",
-  "expected": "Robust → damaged · Balanced → ok (ข้อความอยู่แค่แถวบนของรูป)",
+  "expected": "Robust → damaged · Balanced → ok (ข้อความอยู่แค่แถวบนสุดของภาพ)",
   "runs": [
    {
     "image": "249061.jpg",
@@ -322,9 +322,9 @@
  {
   "id": "S12",
   "kind": "stego",
-  "title": "รูปเรียบมาก และรูปขาวจัด",
-  "settings": "Balanced · รูปเรียบ + รูปขาวจัด · JPEG Q90",
-  "expected": "ok ทั้งสองรูป",
+  "title": "ภาพเรียบมาก และภาพที่มีส่วนขาวจัด",
+  "settings": "Balanced · ภาพเรียบ + ภาพขาวจัด · JPEG Q90",
+  "expected": "ok ทั้งสองภาพ",
   "runs": [
    {
     "image": "80099.jpg",
@@ -338,7 +338,7 @@
      90
     ],
     "read_original": false,
-    "label": "รูปเรียบมาก",
+    "label": "ภาพเรียบมาก",
     "expect": {
      "status": "ok"
     }
@@ -355,7 +355,7 @@
      90
     ],
     "read_original": false,
-    "label": "รูปขาวจัด",
+    "label": "ภาพขาวจัด",
     "expect": {
      "status": "ok"
     }
@@ -365,9 +365,9 @@
  {
   "id": "S13",
   "kind": "stego",
-  "title": "ECC ปิด vs เปิด",
-  "settings": "Capacity · รูปสว่างมาก · ECC ปิด แล้วเปิด · JPEG Q75",
-  "expected": "ECC ปิด: damaged · ECC เปิด: ok และบอกว่าแก้ไปกี่บิต",
+  "title": "ECC off vs on",
+  "settings": "Capacity · ภาพสว่างมาก · ECC off แล้ว on · JPEG Q75",
+  "expected": "ECC off: damaged · ECC on: ok และแสดงจำนวนบิตที่ ECC แก้ได้",
   "runs": [
    {
     "image": "181021.jpg",
@@ -381,7 +381,7 @@
      75
     ],
     "read_original": false,
-    "label": "ECC ปิด",
+    "label": "ECC off",
     "expect": {
      "not_ok": true
     }
@@ -398,7 +398,7 @@
      75
     ],
     "read_original": false,
-    "label": "ECC เปิด",
+    "label": "ECC on",
     "expect": {
      "status": "ok"
     }
@@ -408,9 +408,9 @@
  {
   "id": "S14",
   "kind": "stego",
-  "title": "หมุนรูปเล็กน้อย",
+  "title": "หมุนภาพเล็กน้อย",
   "settings": "ทุก mode · Rotate 0.5°",
-  "expected": "damaged หรือ no_message ทุก mode (ตารางบล็อกเลื่อนไม่ตรงที่เดิม)",
+  "expected": "damaged หรือ no_message ทุก mode (block grid เลื่อนจนไม่ตรงตำแหน่งเดิม)",
   "runs": [
    {
     "image": "249061.jpg",
@@ -468,9 +468,9 @@
  {
   "id": "W1",
   "kind": "wm",
-  "title": "ฝังโลโก้ แล้วตรวจ",
+  "title": "ฝัง logo แล้วตรวจ",
   "settings": "Logo LA2026 · α=16",
-  "expected": "มีลายน้ำของเรา (shift ≥ 0.8) · PSNR ≥ 40 dB",
+  "expected": "พบ watermark ของเรา (shift ≥ 0.8) · PSNR ≥ 40 dB",
   "runs": [
    {
     "image": "249061.jpg",
@@ -481,7 +481,7 @@
      null
     ],
     "target": "marked",
-    "label": "รูปที่ฝัง",
+    "label": "Watermarked",
     "expect": {
      "shift_min": 0.8,
      "psnr_min": 40
@@ -492,9 +492,9 @@
  {
   "id": "W2",
   "kind": "wm",
-  "title": "ตรวจรูปที่ไม่เคยฝัง",
-  "settings": "α=16 · ตรวจรูปต้นฉบับ",
-  "expected": "โลโก้ยังขึ้นและ NCC สูง แต่ shift = 0 → ไม่มีลายน้ำของเรา",
+  "title": "ตรวจภาพที่ไม่เคยฝัง watermark",
+  "settings": "α=16 · ตรวจภาพต้นฉบับ",
+  "expected": "logo ยังปรากฏและ NCC สูง แต่ shift = 0 → ไม่พบ watermark ของเรา",
   "runs": [
    {
     "image": "249061.jpg",
@@ -505,7 +505,7 @@
      null
     ],
     "target": "original",
-    "label": "รูปต้นฉบับ",
+    "label": "Original",
     "expect": {
      "shift_max": 0.3
     }
@@ -517,7 +517,7 @@
   "kind": "wm",
   "title": "Watermark + JPEG",
   "settings": "α=16 · JPEG Q75",
-  "expected": "มีลายน้ำของเรา (shift ≥ 0.8)",
+  "expected": "พบ watermark ของเรา (shift ≥ 0.8)",
   "runs": [
    {
     "image": "249061.jpg",
@@ -528,7 +528,7 @@
      75
     ],
     "target": "marked",
-    "label": "รูปที่ฝัง · JPEG Q75",
+    "label": "Watermarked · JPEG Q75",
     "expect": {
      "shift_min": 0.8
     }
@@ -538,9 +538,9 @@
  {
   "id": "W4",
   "kind": "wm",
-  "title": "α เบาเกินไป",
+  "title": "α ต่ำเกินไป",
   "settings": "α=2 · JPEG Q75",
-  "expected": "รูปแทบไม่เปลี่ยน แต่หลัง JPEG ไม่มีลายน้ำของเรา (shift < 0.8)",
+  "expected": "ภาพแทบไม่เปลี่ยน แต่หลัง JPEG ไม่พบ watermark ของเรา (shift < 0.8)",
   "runs": [
    {
     "image": "249061.jpg",
@@ -561,9 +561,9 @@
  {
   "id": "W5",
   "kind": "wm",
-  "title": "Watermark + หมุน",
+  "title": "Watermark + Rotate",
   "settings": "α=16 · Rotate 1°",
-  "expected": "shift ของรูปที่ฝังสูงกว่ารูปที่ไม่เคยฝังชัดเจน",
+  "expected": "shift ของภาพที่ฝังสูงกว่าภาพที่ไม่เคยฝังอย่างชัดเจน",
   "runs": [
    {
     "image": "249061.jpg",
@@ -574,7 +574,7 @@
      1.0
     ],
     "target": "marked",
-    "label": "รูปที่ฝัง",
+    "label": "Watermarked",
     "expect": {
      "higher_than_next": true
     }
@@ -588,7 +588,7 @@
      1.0
     ],
     "target": "original",
-    "label": "รูปต้นฉบับ",
+    "label": "Original",
     "expect": null
    }
   ]
@@ -598,7 +598,7 @@
   "kind": "wm",
   "title": "Watermark + blur",
   "settings": "α=16 · Blur r=1",
-  "expected": "ตัดสินไม่ได้: shift ของทั้งสองรูปติดลบ",
+  "expected": "ตัดสินไม่ได้: shift ของทั้งสองภาพติดลบ",
   "runs": [
    {
     "image": "249061.jpg",
@@ -609,7 +609,7 @@
      1.0
     ],
     "target": "marked",
-    "label": "รูปที่ฝัง",
+    "label": "Watermarked",
     "expect": {
      "shift_below": 0.8
     }
@@ -623,7 +623,7 @@
      1.0
     ],
     "target": "original",
-    "label": "รูปต้นฉบับ",
+    "label": "Original",
     "expect": {
      "shift_below": 0.8
     }
