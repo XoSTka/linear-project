@@ -318,7 +318,7 @@ nav.tabs button:hover{color:var(--ink)}
             <label class="f" for="s-msg" style="margin:0">ข้อความ</label>
             <span class="mono" style="font-size:14px;color:var(--muted)" id="s-count">0 / 0 bytes</span>
           </div>
-          <textarea id="s-msg">นัดบ่ายสาม ตึก 12</textarea>
+          <textarea id="s-msg">นัดบ่ายสาม ตึก ECC</textarea>
           <div class="capbar" id="s-capbar"><div></div></div>
           <div class="hint">ตัวอักษรไทย 3 bytes · อังกฤษ 1 byte · ตัวอย่าง: <a href="#" id="s-short">ข้อความสั้น</a> · <a href="#" id="s-long">ข้อความยาว</a></div>
         </div>
@@ -564,7 +564,7 @@ nav.tabs button:hover{color:var(--ink)}
 <script>
 const $ = s => document.querySelector(s), $$ = s => [...document.querySelectorAll(s)];
 const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
-const SHORT = 'นัดบ่ายสาม ตึก 12';
+const SHORT = 'นัดบ่ายสาม ตึก ECC';
 const LONG = 'ข้อความนี้ยาวเกือบเต็ม capacity ของภาพในโหมด Balanced เพื่อทดสอบว่าระบบยัง encode และ decode กลับได้ครบถ้วนทุกตัวอักษร';
 const ATTACKS = [
   ['none', null, 'none — ส่งเป็นไฟล์ PNG'],
