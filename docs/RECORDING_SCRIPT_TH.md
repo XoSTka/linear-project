@@ -1,6 +1,6 @@
 # สคริปต์อัดคลิป: อธิบายโค้ดและคณิตศาสตร์ของโปรเจกต์
 
-**วิธีใช้ไฟล์นี้:** เปิดไฟล์นี้ใน VS Code แล้วกด `Ctrl+Shift+V` (Markdown Preview) วางไว้ครึ่งจอ จากนั้นกด `Ctrl` ค้างแล้วคลิกลิงก์ `เปิด ...` ได้เลย VS Code จะเปิดไฟล์โค้ดที่บรรทัดนั้นให้ ส่วนสูตรเขียนเป็น LaTeX (`$$...$$`) ซึ่ง Preview แสดงเป็นสูตรจริงแล้ว ถ่ายภาพหน้าจอไปวางข้างโค้ดตอนตัดต่อได้
+**วิธีใช้ไฟล์นี้:** เปิดไฟล์นี้ใน VS Code แล้วกด `Ctrl+Shift+V` (Markdown Preview) วางไว้ครึ่งจอ จากนั้นกด `Ctrl` ค้างแล้วคลิกลิงก์ `เปิด ...` ได้เลย VS Code จะเปิดไฟล์โค้ดที่บรรทัดนั้นให้ ส่วนสูตรเป็นรูป PNG พื้นขาวในโฟลเดอร์ [docs/formulas](formulas/) (ความละเอียดสูง) ใช้ไฟล์ไปวางข้างโค้ดตอนตัดต่อได้เลย ไม่ต้องถ่ายภาพหน้าจอ ต้นฉบับ LaTeX ของแต่ละรูปอยู่ใน [formulas/SOURCE.md](formulas/SOURCE.md)
 เลขบรรทัดตรวจแล้วกับไฟล์ `src/` และ `examples/` ที่ตรงกันทั้งบนเครื่องคุณและที่ผมใช้ และ `demo/core.py` ตรวจกับฉบับในเครื่องคุณ ถ้าแก้โค้ดภายหลัง เลขบรรทัดอาจเลื่อน ให้เช็กอีกครั้งก่อนอัด
 
 ทุกฉากมีหัวข้อ 5 อย่างเรียงตามนี้
@@ -58,7 +58,10 @@
 
 **สูตร:**
 
-$$A = U\,\Sigma\,V^{T} = \sum_{i}\sigma_i\,u_i\,v_i^{T},\qquad \sigma_1\ge\sigma_2\ge\dots\ge 0$$
+
+
+![สูตรที่ 1](formulas/f01.png)
+
 
 **โค้ด (บรรทัด 13–21):**
 ```python
@@ -73,12 +76,18 @@ def reconstruct(U, s, Vt):
 **พูด (ตอนเลื่อนไป `reconstruct` และ `energy`):**
 > `reconstruct` ทำตรงข้าม คือเอาสามก้อนมาประกอบกลับเป็นเมทริกซ์ `U` คูณ σ คูณ `Vᵀ` ส่วน `energy` คือผลรวมของ σ ยกกำลังสอง ซึ่งเท่ากับผลรวมของทุกช่องในเมทริกซ์ยกกำลังสอง เราใช้ตรวจว่าการแยกไม่ทำให้ข้อมูลหายไป
 
-**สูตร:** $$\|A\|_F^{2}=\sum_{i,j}a_{ij}^{2}=\sum_i \sigma_i^{2}$$
+**สูตร:** 
+
+![สูตรที่ 2](formulas/f02.png)
+
 
 **พูด (ตอนเลื่อนไป `svd_2x2_by_hand`):**
 > ฟังก์ชันนี้คำนวณ SVD ของเมทริกซ์ 2×2 ด้วยมือ ตามขั้นตอนในรายงาน เพื่อพิสูจน์ว่า numpy ไม่ได้ทำอะไรลึกลับ วิธีคือหา eigenvalue (ค่าเฉพาะ) λ ของ `AᵀA` แล้ว σ เท่ากับรากที่สองของ λ
 
-**สูตร:** $$\sigma_i=\sqrt{\lambda_i},\quad A^{T}A\,v_i=\lambda_i v_i,\quad u_i=\frac{A\,v_i}{\sigma_i}$$
+**สูตร:** 
+
+![สูตรที่ 3](formulas/f03.png)
+
 
 **รัน:** เปิด terminal แล้วรัน `python examples/ex2_svd_2x2.py` (โค้ดของสคริปต์: [examples/ex2_svd_2x2.py](../examples/ex2_svd_2x2.py))
 
@@ -110,9 +119,15 @@ numpy:   sigma = [6.7082 2.2361]
 
 **สูตร:**
 
-$$\mathrm{MSE}=\frac{1}{N}\sum (a-b)^2,\qquad \mathrm{PSNR}=10\log_{10}\frac{255^{2}}{\mathrm{MSE}}\ \text{dB}$$
 
-$$\mathrm{NCC}(W,W^{*})=\frac{\langle W,W^{*}\rangle}{\|W\|\,\|W^{*}\|},\qquad \mathrm{BER}=\frac{\text{wrong bits}}{\text{all bits}}$$
+
+![สูตรที่ 4](formulas/f04.png)
+
+
+
+
+![สูตรที่ 5](formulas/f05.png)
+
 
 **โค้ด (บรรทัด 18–29):**
 ```python
@@ -157,9 +172,15 @@ a + b (mod 2)      = [0 1 1 0]
 
 **สูตร:**
 
-$$q=\left\lfloor\frac{\sigma}{\Delta}\right\rfloor,\qquad \text{bit}=q \bmod 2$$
 
-$$\sigma' = \left(q'+\tfrac12\right)\Delta,\quad q' = \text{nearest interval with } q' \bmod 2 = \text{bit}$$
+
+![สูตรที่ 6](formulas/f06.png)
+
+
+
+
+![สูตรที่ 7](formulas/f07.png)
+
 
 **โค้ด (บรรทัด 33–50):**
 ```python
@@ -211,7 +232,10 @@ PSNR             = 42.11 dB
 **พูด (to_blocks และ capacity):**
 > ตัวอย่างเมื่อกี้ใช้ block เดียว ของจริงต้องซ่อนข้อความยาวๆ จึงตัดรูปเป็น block สี่เหลี่ยมขนาด `b` คูณ `b` เรียงตามลำดับการอ่านหนังสือ แต่ละ block ซ่อนได้ 1 bit ในโหมด Balanced ใช้ `b` เท่ากับ 8 และ Δ เท่ากับ 32 ความจุของรูปจึงเท่ากับจำนวน block คือความสูงหาร `b` คูณความกว้างหาร `b` รูปตัวอย่างขนาด 480×320 มี 60 คูณ 40 เท่ากับ 2,400 block ใส่ข้อความได้ 296 bytes
 
-**สูตร:** $$\text{capacity}=\left\lfloor\frac{h}{b}\right\rfloor\left\lfloor\frac{w}{b}\right\rfloor\ \text{bits}$$
+**สูตร:** 
+
+![สูตรที่ 8](formulas/f08.png)
+
 
 **พูด (embed_bits เริ่มต้น):** เลื่อนไปบรรทัด 156–158
 > ฟังก์ชัน `embed_bits` คือหัวใจของฝั่งซ่อนข้อความ ขั้นแรกบรรทัด 157 ทำ SVD ของทุก block พร้อมกัน แล้วบรรทัด 158 เอา σ ตัวที่ k ออกมา ค่าปริยายคือ k เท่ากับ 0 คือ σ₁ เหตุผลที่เลือก σ₁ คือมันใหญ่ที่สุด ขยับนิดเดียวเมื่อเทียบกับตัวมันเอง รูปจึงแทบไม่เปลี่ยน และทนการรบกวนได้ดี
@@ -248,7 +272,10 @@ mg = np.minimum(pos, 1.0 - pos)
 
 **สูตร (margin ของ closed-loop):**
 
-$$\text{pos}=\frac{\hat\sigma-u}{\Delta}\bmod 1,\qquad \text{margin}=\min(\text{pos},\,1-\text{pos})\ \ge\ 0.25$$
+
+
+![สูตรที่ 9](formulas/f09.png)
+
 
 **พูด (บรรทัด 180–188 ส่วนยอมรับหรือปฏิเสธ):**
 > บรรทัด 180–181 คำนวณว่า σ ที่อ่านกลับห่างจากขอบช่วงแค่ไหน นับเป็นสัดส่วนของ Δ ถ้า σ ตกใกล้ขอบมาก JPEG นิดเดียวก็พลิก bit ได้ จึงมีเงื่อนไขบรรทัด 186 ว่ายอมรับตัวเลือกนี้ก็ต่อเมื่ออ่านถูกและ margin อย่างน้อย 0.25 คือ σ ต้องตกอยู่ในครึ่งกลางของช่วง ถ้าตัวเลือกแรกไม่ผ่าน วนไปลองตัวเลือกถัดไปที่ไกลขึ้น
@@ -299,7 +326,10 @@ return extract_bit_array(sig[:, k], delta, _dither(n_bits, delta, key))
 >
 > ผลคือ ถ้าไม่มี key ตำแหน่ง σ หาร Δ ของทุก block จะดูกระจายเท่ากัน ไม่กองอยู่ตรงกลางช่วง ซึ่งเป็นรอยให้จับได้ และถ้าอ่านด้วย key ผิด ค่าเลื่อนผิดทุก block bit ที่อ่านได้จะผิดไปประมาณครึ่งหนึ่ง
 
-**สูตร:** $$q_i=\left\lfloor\frac{\sigma_i-u_i}{\Delta}\right\rfloor,\quad \text{bit}_i=q_i \bmod 2,\quad u_i\in[0,2\Delta)\ \text{from PBKDF2(key)}$$
+**สูตร:** 
+
+![สูตรที่ 10](formulas/f10.png)
+
 
 **โค้ด (บรรทัด 92–110):**
 ```python
@@ -328,7 +358,10 @@ def _dither(n, delta, key):
 >
 > CRC (Cyclic Redundancy Check) คือเลขตรวจที่คำนวณจากความยาวและข้อความ ผู้รับคำนวณ CRC จากข้อความที่อ่านได้ใหม่ แล้วเทียบกับ CRC ที่ซ่อนมา ถ้าไม่ตรงแปลว่ามี bit ผิด เราจึงรู้ว่าข้อความเสียหาย ไม่ต้องเดา
 
-**สูตร:** $$\text{frame}=\underbrace{\text{length}}_{16\text{ bit}}\ \Vert\ \underbrace{\text{CRC-16}(\text{length}\Vert\text{text})}_{16\text{ bit}}\ \Vert\ \underbrace{\text{UTF-8 text}}_{8\times\text{bytes}},\qquad \text{bits}=32+8\times\text{bytes}$$
+**สูตร:** 
+
+![สูตรที่ 11](formulas/f11.png)
+
 
 **โค้ด (บรรทัด 240–251):**
 ```python
@@ -378,9 +411,15 @@ right key, JPEG90 : ('นัดเจอหน้าตึก ECC 5 โมง', 
 
 **สูตร:**
 
-$$G=[\,I_4\ \vert\ P\,],\quad H=[\,P^{T}\ \vert\ I_3\,],\quad G H^{T}\equiv 0 \pmod 2$$
 
-$$c = d\,G \bmod 2,\qquad s = H\,r^{T} \bmod 2$$
+
+![สูตรที่ 12](formulas/f12.png)
+
+
+
+
+![สูตรที่ 13](formulas/f13.png)
+
 
 **โค้ด (บรรทัด 19–24 และ 36–53):**
 ```python
@@ -432,7 +471,10 @@ decoded       = [1 0 1 1]  bits corrected: 1
 
 **สูตร:**
 
-$$A=U S V^{T},\quad D=S+\alpha W,\quad D=U_w S_w V_w^{T},\quad A_w=U\,S_w\,V^{T}$$
+
+
+![สูตรที่ 14](formulas/f14.png)
+
 
 **โค้ด (บรรทัด 27–36):**
 ```python
@@ -449,7 +491,10 @@ def embed(A, W, alpha):
 **พูด (extract):**
 > ตอนถอด เอารูปที่ได้รับมาทำ SVD เอาเฉพาะ σ ที่ได้ เรียกว่า σ ดาว (σ*) แล้วสร้าง `D*` ใหม่จาก `Uw` คูณ σ* คูณ `Vwᵀ` ลบ `S` เดิมออก แล้วหารด้วย α ได้โลโก้ที่ประมาณได้ `W*`
 
-**สูตร:** $$D^{*}=U_w\,\mathrm{diag}(\sigma^{*})\,V_w^{T},\qquad W^{*}=\frac{D^{*}-S}{\alpha}$$
+**สูตร:** 
+
+![สูตรที่ 15](formulas/f15.png)
+
 
 **โค้ด (บรรทัด 43–51):**
 ```python
@@ -464,7 +509,10 @@ def extract(A_attacked, key):
 **พูด (shift_score):**
 > ปัญหาคือ NCC ของโลโก้ที่ถอดได้ไม่พอ เพราะโครงของโลโก้ถูกเก็บอยู่ใน key (`Uw` กับ `Vwᵀ`) แล้ว ต่อให้เอารูปที่ไม่เคยฝังลายน้ำมาถอด ก็ยังได้โลโก้ขึ้นมา และ NCC สูงด้วย เราจึงเพิ่มคะแนนอีกตัวชื่อ shift ซึ่งถามว่า σ ของรูปที่ได้รับ ขยับไปจาก σ เดิมในทิศทางเดียวกับที่การฝังขยับหรือไม่ วัดด้วย cosine ระหว่างเวกเตอร์สองตัว ได้ใกล้ 1 ถ้ารูปมีลายน้ำ และได้ 0 ถ้ารูปไม่เคยถูกแตะ
 
-**สูตร:** $$\text{shift}=\cos\big(\sigma^{*}-S,\ S_w-S\big)=\frac{\langle \sigma^{*}-S,\ S_w-S\rangle}{\|\sigma^{*}-S\|\ \|S_w-S\|}$$
+**สูตร:** 
+
+![สูตรที่ 16](formulas/f16.png)
+
 
 **โค้ด (บรรทัด 66–71):**
 ```python
@@ -612,7 +660,10 @@ B6 blur radius 1                 16  46.92  blur1.0    0.406 -0.778  no mark
 >
 > `full_stego.py` ฝังบิตสุ่มจนเต็มความจุของแต่ละรูป แล้วทำ attack ทุกแบบ ที่ตั้งค่าเลือก (Δ เท่ากับ 4 เท่าของ b) ได้ PSNR เฉลี่ย 40.7 dB ส่วน `analyze_watermark.py` คำนวณ AUC เพื่อดูว่าคะแนนแยกรูปที่มีลายน้ำออกจากรูปที่ไม่มีได้ดีแค่ไหน ตัวอย่างเช่นที่ α เท่ากับ 8 และ noise std 4 เมื่อเทียบรูปที่ฝังกับรูปเดียวกันที่ไม่เคยฝัง NCC ได้ AUC 0.30 ซึ่งแยกไม่ได้ (0.5 คือเดาสุ่ม) ส่วน shift ได้ 0.96
 
-**สูตร (AUC):** $$\mathrm{AUC}=P\big(\text{score}_{\text{marked}}>\text{score}_{\text{never marked}}\big)+\tfrac12 P(\text{tie})$$
+**สูตร (AUC):** 
+
+![สูตรที่ 17](formulas/f17.png)
+
 
 **โค้ด:** [metrics.auc (บรรทัด 50)](../src/svdmark/metrics.py#L50)
 
@@ -639,20 +690,20 @@ B6 blur radius 1                 16  46.92  blur1.0    0.406 -0.778  no mark
 
 | สูตร | วางคู่กับโค้ด |
 |---|---|
-| $A=U\Sigma V^T$ | [svd_utils.py#L13](../src/svdmark/svd_utils.py#L13) |
-| $\lVert A\rVert_F^2=\sum\sigma_i^2$ | [svd_utils.py#L24](../src/svdmark/svd_utils.py#L24) |
-| $\sigma_i=\sqrt{\lambda_i(A^TA)}$ | [svd_utils.py#L29](../src/svdmark/svd_utils.py#L29) |
-| $\mathrm{PSNR}=10\log_{10}(255^2/\mathrm{MSE})$ | [metrics.py#L18](../src/svdmark/metrics.py#L18) |
-| $\mathrm{NCC}=\langle w,w^*\rangle/(\lVert w\rVert\lVert w^*\rVert)$ | [metrics.py#L24](../src/svdmark/metrics.py#L24) |
-| $q=\lfloor\sigma/\Delta\rfloor,\ \text{bit}=q\bmod2$ | [stego.py#L33](../src/svdmark/stego.py#L33) |
-| ย้าย σ ไปกลางช่วง $(q'+\tfrac12)\Delta$ | [stego.py#L38](../src/svdmark/stego.py#L38) |
-| capacity $\lfloor h/b\rfloor\lfloor w/b\rfloor$ | [stego.py#L66](../src/svdmark/stego.py#L66) |
+| `A = U Σ Vᵀ` | [svd_utils.py#L13](../src/svdmark/svd_utils.py#L13) |
+| `‖A‖_F² = Σ σᵢ²` | [svd_utils.py#L24](../src/svdmark/svd_utils.py#L24) |
+| `σᵢ = √λᵢ(AᵀA)` | [svd_utils.py#L29](../src/svdmark/svd_utils.py#L29) |
+| `PSNR = 10·log₁₀(255² / MSE)` | [metrics.py#L18](../src/svdmark/metrics.py#L18) |
+| `NCC = ⟨w, w*⟩ / (‖w‖·‖w*‖)` | [metrics.py#L24](../src/svdmark/metrics.py#L24) |
+| `q = ⌊σ/Δ⌋,  bit = q mod 2` | [stego.py#L33](../src/svdmark/stego.py#L33) |
+| ย้าย σ ไปกลางช่วง `(q' + ½)·Δ` | [stego.py#L38](../src/svdmark/stego.py#L38) |
+| capacity `⌊h/b⌋·⌊w/b⌋` | [stego.py#L66](../src/svdmark/stego.py#L66) |
 | SVD ของทุก block และเลือกช่วง | [stego.py#L157](../src/svdmark/stego.py#L157) |
-| ปัดเศษ + อ่านกลับ + margin $\ge0.25\Delta$ | [stego.py#L177](../src/svdmark/stego.py#L177) |
-| key → $u_i$ (PBKDF2) | [stego.py#L92](../src/svdmark/stego.py#L92) |
+| ปัดเศษ + อ่านกลับ + margin `≥ 0.25·Δ` | [stego.py#L177](../src/svdmark/stego.py#L177) |
+| key → `uᵢ` (PBKDF2) | [stego.py#L92](../src/svdmark/stego.py#L92) |
 | frame length ∥ CRC ∥ text | [stego.py#L244](../src/svdmark/stego.py#L244) |
-| $c=dG \bmod 2,\ s=Hr^T \bmod 2$ | [ecc.py#L36](../src/svdmark/ecc.py#L36) |
-| $D=S+\alpha W,\ A_w=US_wV^T$ | [watermark.py#L27](../src/svdmark/watermark.py#L27) |
-| $W^*=(D^*-S)/\alpha$ | [watermark.py#L43](../src/svdmark/watermark.py#L43) |
-| shift $=\cos(\sigma^*-S,\ S_w-S)$ | [watermark.py#L66](../src/svdmark/watermark.py#L66) |
-| AUC | [metrics.py#L50](../src/svdmark/metrics.py#L50) |
+| `c = d·G mod 2,  s = H·rᵀ mod 2` | [ecc.py#L36](../src/svdmark/ecc.py#L36) |
+| `D = S + α·W,  A_w = U·S_w·Vᵀ` | [watermark.py#L27](../src/svdmark/watermark.py#L27) |
+| `W* = (D* − S) / α` | [watermark.py#L43](../src/svdmark/watermark.py#L43) |
+| `shift = cos(σ* − S,  S_w − S)` | [watermark.py#L66](../src/svdmark/watermark.py#L66) |
+| `AUC = P(score รูปที่ฝัง > score รูปที่ไม่เคยฝัง)` | [metrics.py#L50](../src/svdmark/metrics.py#L50) |
